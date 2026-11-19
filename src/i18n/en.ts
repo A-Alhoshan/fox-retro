@@ -52,7 +52,8 @@ export const en = {
   join: {
     title: "Join the retro",
     name: "Your name",
-    namePlaceholder: "e.g. Sara",
+    namePlaceholder: "e.g. Sara Ahmed",
+    nameHint: "Please enter your first and last name, so the team knows who's who.",
     role: "Your role",
     viewerHint: "Viewers watch only — no writing or voting.",
     submit: "Enter retro",

@@ -66,7 +66,8 @@ export function JoinForm({
         <input
           id="join-name"
           autoFocus
-          autoComplete="given-name"
+          autoComplete="name"
+          aria-describedby="join-name-hint"
           value={name}
           maxLength={60}
           dir="auto"
@@ -74,6 +75,9 @@ export function JoinForm({
           placeholder={t("join.namePlaceholder")}
           className="h-12 rounded-xl border border-input bg-background px-4 text-base outline-none transition focus:border-primary focus:ring-4 focus:ring-primary/15"
         />
+        <p id="join-name-hint" className="text-xs text-muted-foreground">
+          {t("join.nameHint")}
+        </p>
         {!v.ok && v.error === "too_long" && <p className="text-sm text-destructive">{t("join.nameTooLong")}</p>}
       </div>
 

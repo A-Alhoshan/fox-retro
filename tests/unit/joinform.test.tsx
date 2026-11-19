@@ -26,6 +26,19 @@ beforeEach(() => {
 });
 
 describe("JoinForm", () => {
+  it("asks for a first and last name", () => {
+    renderForm();
+    const input = screen.getByLabelText("Your name");
+    expect(input).toHaveAccessibleDescription("Please enter your first and last name, so the team knows who's who.");
+    expect(input).toHaveAttribute("placeholder", "e.g. Sara Ahmed");
+    expect(input).toHaveAttribute("autocomplete", "name");
+  });
+
+  it("asks for a first and last name in Arabic", () => {
+    renderForm(vi.fn(), "ar");
+    expect(screen.getByLabelText("اسمك")).toHaveAccessibleDescription("اكتب اسمك الأول واسم العائلة، عشان يعرف الفريق مين أنت.");
+  });
+
   it("disables submit until the name is valid", async () => {
     renderForm();
     const submit = screen.getByRole("button", { name: "Enter retro" });

@@ -54,7 +54,8 @@ export const ar: Messages = {
   join: {
     title: "ادخل الريترو",
     name: "اسمك",
-    namePlaceholder: "مثلاً: سارة",
+    namePlaceholder: "مثلاً: سارة أحمد",
+    nameHint: "اكتب اسمك الأول واسم العائلة، عشان يعرف الفريق مين أنت.",
     role: "دورك",
     viewerHint: "المشاهد يتابع بس — ما يكتب ولا يصوّت.",
     submit: "ادخل",
