@@ -6,6 +6,7 @@ import { Copy, Check, Printer, Users, StickyNote, Vote } from "lucide-react";
 import { useT } from "@/i18n/locale";
 import { COLUMNS } from "@/lib/domain/types";
 import { toMarkdown } from "@/lib/domain/markdown";
+import { buildExport } from "@/lib/domain/export";
 import { Mascot } from "@/components/mascot/Mascot";
 import type { RetroData } from "./useRetro";
 import { ActionItemRow } from "./ActionPlan";
@@ -19,27 +20,20 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
   const retro = data.retro!;
   const [copied, setCopied] = useState(false);
   const totalVotes = Object.values(data.totals).reduce((a, b) => a + b, 0);
-  const cardText = new Map(data.cards.map((c) => [c.id, c.text]));
   const created = new Date(retro.created_at);
   const date = Number.isNaN(created.getTime())
     ? ""
     : new Intl.DateTimeFormat(locale === "ar" ? "ar-SA" : "en-GB", { dateStyle: "long" }).format(created);
 
-  const markdown = () =>
-    toMarkdown(
-      {
-        title: retro.title,
-        date: retro.created_at.slice(0, 10),
-        cards: data.cards.map((c) => ({ column: c.column, text: c.text, votes: data.totals[c.id] ?? 0 })),
-        actions: data.actions.map((a) => ({
-          text: a.text,
-          owner: data.participants.find((p) => p.id === a.owner_participant_id)?.name ?? a.owner_text,
-          dueDate: a.due_date,
-          refs: a.cardIds.map((id) => cardText.get(id)).filter((x): x is string => !!x),
-        })),
-      },
-      t,
-    );
+  const model = () =>
+    buildExport({
+      retro,
+      participants: data.participants,
+      cards: data.cards,
+      totals: data.totals,
+      actions: data.actions,
+    });
+  const markdown = () => toMarkdown(model());
 
   const stats = [
     { icon: Users, label: t("summary.participants"), n: data.participants.length },
