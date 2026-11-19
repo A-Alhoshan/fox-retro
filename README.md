@@ -9,8 +9,7 @@
   <a href="https://fox-retro.vercel.app"><b>Live demo</b></a> ·
   <a href="#-features">Features</a> ·
   <a href="#-how-a-retro-flows">How it flows</a> ·
-  <a href="#-getting-started">Getting started</a> ·
-  <a href="#-بالعربي">بالعربي</a>
+  <a href="#-getting-started">Getting started</a>
 </p>
 
 <p>
