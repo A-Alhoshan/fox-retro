@@ -17,6 +17,7 @@ import { Participants } from "./Participants";
 import { HostBar } from "./HostBar";
 import { Timer } from "./Timer";
 import { Lobby } from "./Lobby";
+import { Board } from "./Board";
 
 function useNow(ms = 1000) {
   const [now, setNow] = useState(() => Date.now());
@@ -199,5 +200,5 @@ function PhaseBody({ data }: PhaseBodyProps) {
   const retro = data.retro!;
   if (retro.phase === "lobby")
     return <Lobby code={retro.code} people={data.participants} online={data.online} meId={data.me?.id ?? null} />;
-  return null;
+  return <Board data={data} />;
 }
