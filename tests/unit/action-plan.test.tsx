@@ -194,6 +194,6 @@ describe("Summary", () => {
     await userEvent.click(screen.getByRole("button", { name: "Copy as Markdown" }));
     const md = writeText.mock.calls[0][0] as string;
     expect(md).toContain("# Sprint 24");
-    expect(md).toContain("- [ ] Fix CI — Bob (2026-11-26) ↳ Flaky CI");
+    expect(md).toContain("- [ ] Fix CI — Bob (26 Nov 2026) ↳ Flaky CI");
   });
 });
