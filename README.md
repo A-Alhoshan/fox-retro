@@ -105,7 +105,7 @@ These rules come from Postgres Row-Level Security and `SECURITY DEFINER` RPCs, n
 **Prerequisites:** Node 20+ and a free [Supabase](https://supabase.com) project.
 
 ```bash
-git clone https://github.com/A-alhoshan/claude-retro.git
+git clone https://github.com/A-Alhoshan/claude-retro.git
 cd claude-retro
 npm install
 cp .env.example .env.local   # then fill in your Supabase URL and anon key
