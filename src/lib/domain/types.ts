@@ -23,6 +23,7 @@ export type RetroRow = {
   phase: Phase;
   timer_ends_at: string | null;
   timer_remaining_ms: number | null;
+  timer_started: boolean;
   phase_durations: Partial<Record<Phase, number>>;
   show_authors: boolean;
   focused_card_id: string | null;
