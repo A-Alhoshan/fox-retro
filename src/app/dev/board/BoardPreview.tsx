@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Board } from "@/components/retro/Board";
 import { PhaseStepper } from "@/components/retro/PhaseStepper";
@@ -44,6 +44,14 @@ const cards = [
 
 export function BoardPreview() {
   const [phase, setPhase] = useState<Phase>("discussion");
+  const [shot, setShot] = useState(false);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get("phase") as Phase | null;
+    if (p && PHASES.includes(p)) {
+      setPhase(p);
+      setShot(true);
+    }
+  }, []);
   const [focused, setFocused] = useState<string | null>("3");
   const writing = phase === "writing";
   const data: RetroData = {
@@ -87,7 +95,7 @@ export function BoardPreview() {
     <div className="flex min-h-dvh flex-col pb-28">
       <SiteHeader />
       <main className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 sm:px-6">
-        <div className="flex flex-wrap gap-1">
+        <div className={shot ? "hidden" : "flex flex-wrap gap-1"}>
           {PHASES.map((p) => (
             <button key={p} onClick={() => setPhase(p)} className="rounded-full border px-2 py-0.5 text-xs">
               {p}
