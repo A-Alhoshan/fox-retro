@@ -8,6 +8,8 @@ import { Timer } from "@/components/retro/Timer";
 import { Participants } from "@/components/retro/Participants";
 import { Lobby } from "@/components/retro/Lobby";
 import { HostBar } from "@/components/retro/HostBar";
+import { ActionPlan } from "@/components/retro/ActionPlan";
+import { Summary } from "@/components/retro/Summary";
 import { Mascot } from "@/components/mascot/Mascot";
 import { PHASES } from "@/lib/domain/phases";
 import { moodFor } from "@/lib/domain/mood";
@@ -69,7 +71,10 @@ export function BoardPreview() {
     counts: { a: 2, b: 3, c: 1 },
     myVotes: phase === "voting" ? [{ id: "v", card_id: "3", participant_id: "a", retro_id: "r" }] : [],
     totals: { "1": 4, "2": 1, "3": 5, "4": 2, "5": 3 },
-    actions: [],
+    actions: [
+      { id: "x1", retro_id: "r", text: "Stabilise the CI pipeline before next sprint", owner_text: "", owner_participant_id: "c", due_date: "2026-11-30", position: 0, cardIds: ["3"] },
+      { id: "x2", retro_id: "r", text: "نجرب البرمجة الثنائية للقصص الصعبة", owner_text: "فريق الواجهة", owner_participant_id: null, due_date: null, position: 1, cardIds: ["5", "6"] },
+    ],
     offsetMs: 0,
     arrivals: 0,
     notify: () => {},
@@ -107,6 +112,10 @@ export function BoardPreview() {
         <PhaseStepper phase={phase} />
         {phase === "lobby" ? (
           <Lobby code="K7PX2M" people={people} online={data.online} meId="a" />
+        ) : phase === "action_plan" ? (
+          <ActionPlan data={data} />
+        ) : phase === "summary" ? (
+          <Summary data={data} />
         ) : (
           <Board key={phase} data={data} onMakeAction={() => {}} />
         )}

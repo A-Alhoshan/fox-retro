@@ -92,3 +92,101 @@ export async function setPhaseDuration(retroId: string, phase: Phase, ms: number
     return patch;
   });
 }
+
+// ---------- action items ----------
+
+export type ActionInput = {
+  text: string;
+  ownerText: string;
+  ownerParticipantId: string | null;
+  dueDate: string | null;
+  cardIds: string[];
+};
+
+function cleanAction(input: ActionInput) {
+  const text = input.text.trim();
+  const owner = input.ownerText.trim();
+  if (!text || text.length > 500 || owner.length > 80) return null;
+  if (input.dueDate && (!/^\d{4}-\d{2}-\d{2}$/.test(input.dueDate) || Number.isNaN(Date.parse(input.dueDate))))
+    return null;
+  return {
+    text,
+    owner_text: owner,
+    owner_participant_id: input.ownerParticipantId,
+    due_date: input.dueDate || null,
+  };
+}
+
+type Supa = Awaited<ReturnType<typeof createServerClient>>;
+
+async function isHostOf(supabase: Supa, retroId: string) {
+  const { data } = await supabase.rpc("is_host", { p_retro: retroId });
+  return !!data;
+}
+
+async function writeRefs(supabase: Supa, itemId: string, retroId: string, cardIds: string[]) {
+  const unique = [...new Set(cardIds)];
+  if (!unique.length) return { error: null };
+  return supabase
+    .from("action_item_refs")
+    .insert(unique.map((card_id) => ({ action_item_id: itemId, card_id, retro_id: retroId })));
+}
+
+export async function createActionItem(
+  retroId: string,
+  input: ActionInput,
+): Promise<{ id: string } | { error: "forbidden" | "invalid" | "failed" }> {
+  const supabase = await createServerClient();
+  if (!(await isHostOf(supabase, retroId))) return { error: "forbidden" };
+  const row = cleanAction(input);
+  if (!row) return { error: "invalid" };
+  const { count } = await supabase
+    .from("action_items")
+    .select("id", { count: "exact", head: true })
+    .eq("retro_id", retroId);
+  const { data, error } = await supabase
+    .from("action_items")
+    .insert({ retro_id: retroId, ...row, position: count ?? 0 })
+    .select("id")
+    .single();
+  if (error || !data) return { error: "failed" };
+  const refs = await writeRefs(supabase, data.id, retroId, input.cardIds);
+  return refs.error ? { error: "failed" } : { id: data.id };
+}
+
+async function itemRetro(supabase: Supa, id: string): Promise<string | null> {
+  const { data } = await supabase.from("action_items").select("retro_id").eq("id", id).single();
+  return (data as { retro_id: string } | null)?.retro_id ?? null;
+}
+
+export async function updateActionItem(id: string, input: ActionInput): Promise<Result> {
+  const supabase = await createServerClient();
+  const retroId = await itemRetro(supabase, id);
+  if (!retroId || !(await isHostOf(supabase, retroId))) return { error: "forbidden" };
+  const row = cleanAction(input);
+  if (!row) return { error: "invalid" };
+  const { error } = await supabase.from("action_items").update(row).eq("id", id);
+  if (error) return { error: "failed" };
+  const del = await supabase.from("action_item_refs").delete().eq("action_item_id", id);
+  if (del.error) return { error: "failed" };
+  const refs = await writeRefs(supabase, id, retroId, input.cardIds);
+  return refs.error ? { error: "failed" } : { ok: true };
+}
+
+export async function deleteActionItem(id: string): Promise<Result> {
+  const supabase = await createServerClient();
+  const retroId = await itemRetro(supabase, id);
+  if (!retroId || !(await isHostOf(supabase, retroId))) return { error: "forbidden" };
+  const { error } = await supabase.from("action_items").delete().eq("id", id);
+  return error ? { error: "failed" } : { ok: true };
+}
+
+export async function reorderActionItems(retroId: string, ids: string[]): Promise<Result> {
+  const supabase = await createServerClient();
+  if (!(await isHostOf(supabase, retroId))) return { error: "forbidden" };
+  for (const [position, id] of ids.entries()) {
+    const { error } = await supabase.from("action_items").update({ position }).eq("id", id).eq("retro_id", retroId);
+    if (error) return { error: "failed" };
+  }
+  return { ok: true };
+}

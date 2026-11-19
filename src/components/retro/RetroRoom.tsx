@@ -18,6 +18,9 @@ import { HostBar } from "./HostBar";
 import { Timer } from "./Timer";
 import { Lobby } from "./Lobby";
 import { Board } from "./Board";
+import { ActionPlan } from "./ActionPlan";
+import { Summary } from "./Summary";
+import { ActionItemDialog } from "./ActionItemDialog";
 
 function useNow(ms = 1000) {
   const [now, setNow] = useState(() => Date.now());
@@ -200,5 +203,18 @@ function PhaseBody({ data }: PhaseBodyProps) {
   const retro = data.retro!;
   if (retro.phase === "lobby")
     return <Lobby code={retro.code} people={data.participants} online={data.online} meId={data.me?.id ?? null} />;
-  return <Board data={data} />;
+  if (retro.phase === "action_plan") return <ActionPlan data={data} />;
+  if (retro.phase === "summary") return <Summary data={data} />;
+  return <DiscussionAwareBoard data={data} />;
+}
+
+function DiscussionAwareBoard({ data }: PhaseBodyProps) {
+  const [prefill, setPrefill] = useState<string | null>(null);
+  const canMake = data.isHost && data.retro!.phase === "discussion";
+  return (
+    <>
+      <Board data={data} onMakeAction={canMake ? setPrefill : undefined} />
+      <ActionItemDialog data={data} cardId={prefill} onClose={() => setPrefill(null)} />
+    </>
+  );
 }
