@@ -1,6 +1,6 @@
 export const en = {
   app: {
-    name: "Claude Retro",
+    name: "Fox Retro",
     tagline: "Retrospectives your team actually looks forward to.",
     subtitle:
       "Run live retros with your Scrum team — write, reveal, vote, and leave with a clear action plan.",

@@ -2,7 +2,7 @@ import type { Messages } from "./en";
 
 export const ar: Messages = {
   app: {
-    name: "Claude Retro",
+    name: "Fox Retro",
     tagline: "ريترو يستناه فريقك بحماس.",
     subtitle:
       "أدِر ريترو مباشر مع فريق سكرم — اكتبوا، اكشفوا، صوّتوا، واطلعوا بخطة عمل واضحة.",

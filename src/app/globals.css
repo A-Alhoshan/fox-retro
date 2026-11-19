@@ -38,7 +38,7 @@
   --radius-3xl: calc(var(--radius) * 2.2);
 }
 
-/* Claude palette — light */
+/* Brand palette — light */
 :root {
   --background: #faf9f5;
   --foreground: #1f1e1d;
@@ -65,7 +65,7 @@
   --grain-opacity: 0.035;
 }
 
-/* Claude palette — dark */
+/* Brand palette — dark */
 .dark {
   --background: #1f1e1d;
   --foreground: #f5f4ee;

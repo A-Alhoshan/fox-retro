@@ -15,8 +15,8 @@ const plexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "Claude Retro",
-  description: "Live Scrum retrospectives with Claude's look and feel.",
+  title: "Fox Retro",
+  description: "Live Scrum retrospectives your team actually looks forward to.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
