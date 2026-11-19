@@ -80,6 +80,29 @@ describe("SPRITES", () => {
     expect(SPRITES.happy.frames.some((f, i, all) => i > 0 && f.join() !== all[0].join())).toBe(true);
   });
 
+  it("no part paints over the muzzle (eyes stay above the nose row)", () => {
+    for (const m of MOODS) {
+      for (const f of SPRITES[m].frames) {
+        expect(f.some((r) => /[wt]{3}kk[wt]{3}/.test(r)), m).toBe(true);
+      }
+    }
+  });
+
+  it("the curled tail never erases the right arm", () => {
+    for (const p of POSES.celebrate.poses.concat(POSES.jump.poses, POSES.surprised.poses)) {
+      if (p.tail !== "curl") continue;
+      // baseline: the same pose with the tail hanging down (it only touches the bottom rows)
+      const base = draw({ ...p, tail: "down" });
+      const bottom = base.reduce((acc, r, y) => (/o{10}/.test(r) ? y : acc), 0);
+      const curled = draw(p);
+      for (let y = 0; y < bottom; y++) {
+        for (const x of [13, 14]) {
+          if (base[y][x] === "o") expect(curled[y][x], `${JSON.stringify(p)} @${x},${y}`).toBe("o");
+        }
+      }
+    }
+  });
+
   it("ears change with mood", () => {
     for (const ears of ["back", "droop", "perk"] as const) {
       expect(draw({ ears }), ears).not.toEqual(draw({}));

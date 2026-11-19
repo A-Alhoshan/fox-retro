@@ -98,9 +98,9 @@ export function draw(p: Pose, onClip?: () => void): string[] {
       });
       break;
     case "sad":
-      [5, 10].forEach((x) => (put(x, ey + 1, "k"), put(x, ey + 2, "k")));
-      put(4, ey, "k");
-      put(11, ey, "k");
+      [5, 10].forEach((x) => (put(x, ey, "k"), put(x, ey + 1, "k")));
+      put(4, ey - 1, "k");
+      put(11, ey - 1, "k");
       break;
   }
 
@@ -144,7 +144,8 @@ export function draw(p: Pose, onClip?: () => void): string[] {
       put(13, tb, "o"), put(14, tb + 1, "o"), put(15, tb + 1, "w");
       break;
     case "curl":
-      put(13, tb, "o"), put(14, tb, "o"), put(15, tb - 1, "o"), put(15, tb - 2, "o"), put(14, tb - 3, "w");
+      // raised high: tip at column 15 so it never covers the right arm
+      put(13, tb, "o"), put(14, tb, "o"), put(15, tb - 1, "o"), put(15, tb - 2, "o"), put(15, tb - 3, "w");
       break;
   }
 
