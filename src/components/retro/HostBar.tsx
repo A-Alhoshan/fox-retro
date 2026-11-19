@@ -8,35 +8,39 @@ import { nextPhase, prevPhase } from "@/lib/domain/phases";
 import { phaseDuration, remainingMs } from "@/lib/domain/timer";
 import type { RetroRow } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
+import { Hint } from "@/components/ui/hint";
 import * as host from "@/app/r/[code]/host-actions";
 
 function IconBtn({
   label,
+  hint,
   onClick,
   disabled,
   children,
   primary,
 }: {
   label: string;
+  hint: string;
   onClick: () => void;
   disabled?: boolean;
   children: React.ReactNode;
   primary?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-full transition disabled:opacity-30",
-        primary ? "bg-primary text-primary-foreground hover:brightness-110" : "hover:bg-foreground/10",
-      )}
-    >
-      {children}
-    </button>
+    <Hint title={label} description={hint}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(
+          "grid size-9 shrink-0 place-items-center rounded-full transition disabled:opacity-30",
+          primary ? "bg-primary text-primary-foreground hover:brightness-110" : "hover:bg-foreground/10",
+        )}
+      >
+        {children}
+      </button>
+    </Hint>
   );
 }
 
@@ -48,7 +52,10 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
   const [minutes, setMinutes] = useState(String(Math.round(duration / 60000)));
   useEffect(() => setMinutes(String(Math.round(duration / 60000))), [duration]);
 
-  const left = remainingMs({ endsAt: retro.timer_ends_at, remainingMs: retro.timer_remaining_ms }, Date.now() + offsetMs);
+  const left = remainingMs(
+    { endsAt: retro.timer_ends_at, remainingMs: retro.timer_remaining_ms },
+    Date.now() + offsetMs,
+  );
   const running = !!retro.timer_ends_at && left > 0;
   const prev = prevPhase(retro.phase);
   const next = nextPhase(retro.phase);
@@ -63,7 +70,8 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
     if (running) return run(() => host.pauseTimer(retro.id));
     if (retro.timer_started && !retro.timer_ends_at && (retro.timer_remaining_ms ?? 0) > 0)
       return run(() => host.resumeTimer(retro.id));
-    const ms = (retro.timer_remaining_ms ?? 0) > 0 && !retro.timer_ends_at ? retro.timer_remaining_ms! : duration || 60_000;
+    const ms =
+      (retro.timer_remaining_ms ?? 0) > 0 && !retro.timer_ends_at ? retro.timer_remaining_ms! : duration || 60_000;
     return run(() => host.startTimer(retro.id, ms));
   };
 
@@ -76,6 +84,7 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
     >
       {error && <p className="rounded-full bg-destructive px-3 py-1 text-xs text-white">{error}</p>}
       <div
+        data-host-bar
         role="toolbar"
         aria-label={t("host.controls")}
         className={cn(
@@ -86,13 +95,21 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
         <span className="hidden items-center gap-1.5 ps-2 pe-1 text-xs font-medium text-primary md:flex">
           <Crown className="size-3.5" /> {t("host.controls")}
         </span>
-        <IconBtn label={t("host.prev")} onClick={() => prev && run(() => host.setPhase(retro.id, prev))} disabled={!prev}>
+        <IconBtn
+          label={t("host.prev")}
+          hint={t("hint.prev")}
+          onClick={() => prev && run(() => host.setPhase(retro.id, prev))}
+          disabled={!prev}
+        >
           <ChevronLeft className="size-4 rtl:rotate-180" />
         </IconBtn>
-        <span className="min-w-20 px-1 text-center text-sm font-medium whitespace-nowrap">{t(`phases.${retro.phase}`)}</span>
+        <span className="min-w-20 px-1 text-center text-sm font-medium whitespace-nowrap">
+          {t(`phases.${retro.phase}`)}
+        </span>
         <IconBtn
           primary
           label={t("host.next")}
+          hint={t("hint.next")}
           onClick={() => next && run(() => host.setPhase(retro.id, next))}
           disabled={!next}
         >
@@ -101,36 +118,47 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
 
         <span className="mx-1 h-6 w-px shrink-0 bg-border" />
 
-        <IconBtn label={running ? t("timer.pause") : t("timer.start")} onClick={playPause}>
+        <IconBtn
+          label={running ? t("timer.pause") : t("timer.start")}
+          hint={running ? t("hint.pause") : t("hint.start")}
+          onClick={playPause}
+        >
           {running ? <Pause className="size-4" /> : <Play className="size-4 rtl:rotate-180" />}
         </IconBtn>
-        <IconBtn label={t("timer.addMinute")} onClick={() => run(() => host.addMinute(retro.id))}>
+        <IconBtn
+          label={t("timer.addMinute")}
+          hint={t("hint.addMinute")}
+          onClick={() => run(() => host.addMinute(retro.id))}
+        >
           <Plus className="size-4" />
         </IconBtn>
-        <IconBtn label={t("timer.reset")} onClick={() => run(() => host.resetTimer(retro.id))}>
+        <IconBtn label={t("timer.reset")} hint={t("hint.reset")} onClick={() => run(() => host.resetTimer(retro.id))}>
           <RotateCcw className="size-4" />
         </IconBtn>
-        <label className="flex items-center gap-1 rounded-full px-2 text-xs text-muted-foreground" title={t("timer.duration")}>
-          <input
-            type="number"
-            min={1}
-            max={180}
-            value={minutes}
-            aria-label={t("timer.duration")}
-            onChange={(e) => setMinutes(e.target.value)}
-            onBlur={() => {
-              const m = Number(minutes);
-              if (m > 0 && m * 60000 !== duration) run(() => host.setPhaseDuration(retro.id, retro.phase, m * 60000));
-            }}
-            className="h-8 w-12 rounded-lg border border-input bg-background text-center text-sm text-foreground tabular-nums outline-none focus:border-primary"
-          />
-          <span>min</span>
-        </label>
+        <Hint title={t("timer.duration")} description={t("hint.duration")}>
+          <label className="flex items-center gap-1 rounded-full px-2 text-xs text-muted-foreground">
+            <input
+              type="number"
+              min={1}
+              max={180}
+              value={minutes}
+              aria-label={t("timer.duration")}
+              onChange={(e) => setMinutes(e.target.value)}
+              onBlur={() => {
+                const m = Number(minutes);
+                if (m > 0 && m * 60000 !== duration) run(() => host.setPhaseDuration(retro.id, retro.phase, m * 60000));
+              }}
+              className="h-8 w-12 rounded-lg border border-input bg-background text-center text-sm text-foreground tabular-nums outline-none focus:border-primary"
+            />
+            <span>min</span>
+          </label>
+        </Hint>
 
         <span className="mx-1 h-6 w-px shrink-0 bg-border" />
 
         <IconBtn
           label={t("common.showAuthors")}
+          hint={retro.show_authors ? t("hint.hideAuthors") : t("hint.showAuthors")}
           onClick={() => run(() => host.setShowAuthors(retro.id, !retro.show_authors))}
         >
           {retro.show_authors ? <Eye className="size-4 text-primary" /> : <EyeOff className="size-4" />}

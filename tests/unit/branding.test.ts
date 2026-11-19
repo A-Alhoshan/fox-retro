@@ -29,3 +29,18 @@ describe("branding", () => {
     expect(files).not.toContain("favicon.ico");
   });
 });
+
+describe("credit", () => {
+  it("every page carries a quiet Made by Ali footer", async () => {
+    const { render, screen } = await import("@testing-library/react");
+    const { SiteFooter } = await import("@/components/SiteFooter");
+    render(SiteFooter());
+    const el = screen.getByText("Made by Ali");
+    expect(el.closest("footer")).not.toBeNull();
+    expect(readFileSync(join(process.cwd(), "src/app/layout.tsx"), "utf8")).toMatch(/<SiteFooter\s*\/>/);
+  });
+
+  it("the README credits Ali", () => {
+    expect(readFileSync(join(process.cwd(), "README.md"), "utf8")).toMatch(/Made by Ali/);
+  });
+});

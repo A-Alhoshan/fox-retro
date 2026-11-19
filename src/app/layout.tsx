@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SiteFooter } from "@/components/SiteFooter";
 import { Fraunces, Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import "./globals.css";
@@ -35,7 +36,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="grain min-h-full flex flex-col">
         <ThemeProvider>
-          <LocaleProvider initial={locale}>{children}</LocaleProvider>
+          <LocaleProvider initial={locale}>
+            {children}
+            <SiteFooter />
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

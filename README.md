@@ -165,4 +165,4 @@ supabase/migrations/    schema, RLS, RPCs
 
 ## 📄 Notes
 
-Built with ❤️ and [Claude Code](https://claude.com/claude-code).
+Made by Ali. Built with ❤️ and [Claude Code](https://claude.com/claude-code).

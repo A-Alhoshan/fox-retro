@@ -1,5 +1,6 @@
 "use client";
 
+import { Hint } from "@/components/ui/hint";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Pencil, Trash2, Target, ListPlus, Check, X } from "lucide-react";
@@ -106,7 +107,11 @@ export function Card(p: CardProps) {
           </div>
         </div>
       ) : (
-        <p data-testid="card-text" dir="auto" className={cn("whitespace-pre-wrap break-words", p.compact ? "text-sm" : "text-[0.95rem] leading-relaxed")}>
+        <p
+          data-testid="card-text"
+          dir="auto"
+          className={cn("whitespace-pre-wrap break-words", p.compact ? "text-sm" : "text-[0.95rem] leading-relaxed")}
+        >
           {card.text}
         </p>
       )}
@@ -157,29 +162,36 @@ export function Card(p: CardProps) {
             {phase === "discussion" && p.isHost && (
               <>
                 {p.onMakeAction && (
+                  <Hint title={t("card.makeAction")} description={t("hint.makeAction")}>
+                    <button
+                      type="button"
+                      aria-label={t("card.makeAction")}
+                      onClick={() => p.onMakeAction!(card.id)}
+                      className="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    >
+                      <ListPlus className="size-4" />
+                    </button>
+                  </Hint>
+                )}
+                <Hint
+                  title={p.focused ? t("card.unfocus") : t("card.focus")}
+                  description={p.focused ? t("hint.unfocus") : t("hint.focus")}
+                >
                   <button
                     type="button"
-                    aria-label={t("card.makeAction")}
-                    title={t("card.makeAction")}
-                    onClick={() => p.onMakeAction!(card.id)}
-                    className="grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    onClick={p.onFocus}
+                    aria-pressed={p.focused}
+                    aria-label={p.focused ? t("card.unfocus") : t("card.focus")}
+                    className={cn(
+                      "grid size-8 place-items-center rounded-lg transition",
+                      p.focused
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
                   >
-                    <ListPlus className="size-4" />
+                    <Target className="size-4" />
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={p.onFocus}
-                  aria-pressed={p.focused}
-                  aria-label={p.focused ? t("card.unfocus") : t("card.focus")}
-                  title={p.focused ? t("card.unfocus") : t("card.focus")}
-                  className={cn(
-                    "grid size-8 place-items-center rounded-lg transition",
-                    p.focused ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <Target className="size-4" />
-                </button>
+                </Hint>
               </>
             )}
           </div>

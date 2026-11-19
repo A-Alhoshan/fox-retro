@@ -148,3 +148,8 @@
     color: #000;
   }
 }
+
+/* keep the "Made by Ali" footer clear of the floating host controls */
+body:has([data-host-bar]) footer {
+  padding-bottom: 6rem;
+}
