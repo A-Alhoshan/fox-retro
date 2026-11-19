@@ -52,7 +52,7 @@ function banner(theme: keyof typeof themes): string {
   <rect width="${w}" height="${h}" rx="28" fill="url(#bg)"/>
   <circle cx="1010" cy="200" r="230" fill="url(#glow)"/>
   <text x="96" y="132" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" letter-spacing="3" fill="#D97757">SCRUM · RETROSPECTIVE</text>
-  <text x="92" y="214" font-family="Georgia, 'Times New Roman', serif" font-size="84" fill="${t.fg}">Claude Retro</text>
+  <text x="92" y="214" font-family="Georgia, 'Times New Roman', serif" font-size="84" fill="${t.fg}">Fox Retro</text>
   <text x="96" y="262" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="24" fill="${t.muted}">Live retros your team actually looks forward to.</text>
   ${chipSvg}
   ${animatedSprite("celebrate", 850, 90, 20, `b${theme}`)}

@@ -2,11 +2,11 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg">
-  <img alt="Claude Retro — live retros your team actually looks forward to" src="docs/assets/banner-light.svg" width="100%">
+  <img alt="Fox Retro — live retros your team actually looks forward to" src="docs/assets/banner-light.svg" width="100%">
 </picture>
 
 <p>
-  <a href="https://retrospective-tool-virid.vercel.app"><b>Live demo</b></a> ·
+  <a href="https://fox-retro.vercel.app"><b>Live demo</b></a> ·
   <a href="#-features">Features</a> ·
   <a href="#-how-a-retro-flows">How it flows</a> ·
   <a href="#-getting-started">Getting started</a> ·
@@ -25,10 +25,10 @@
 
 </div>
 
-**Claude Retro** is a real-time Scrum retrospective board. The Scrum Master runs the session: phases, timer, and the final action plan. Everyone else joins from their own device with just a name and a role. It's warm, calm, and quietly delightful, built with Claude's look and a pixel buddy who reacts to how the retro is going.
+**Fox Retro** is a real-time Scrum retrospective board. The Scrum Master runs the session: phases, timer, and the final action plan. Everyone else joins from their own device with just a name and a role. It's warm, calm, and quietly delightful, with a pixel fox who reacts to how the retro is going.
 
 <div align="center">
-  <img src="docs/assets/board-dark.png" alt="Discussion phase in dark mode, with one card in focus and the mascot looking sad" width="92%">
+  <img src="docs/assets/board-dark.png" alt="Discussion phase in dark mode, with one card in focus and the pixel fox looking sad" width="92%">
 </div>
 
 ## ✨ Features
@@ -36,13 +36,13 @@
 |  |  |
 |---|---|
 | ⚡ **Live on every screen** | Cards, votes, phases and the timer sync instantly across devices with Supabase Realtime. The timer uses server time, so two devices never disagree. |
-| 🎭 **A mascot with feelings** | The pixel Claude is happy in the lobby, focused while you write, nervous in the last 30 seconds, sad over "what to improve", and throws a party at the end. |
+| 🦊 **A fox with feelings** | The pixel fox wags its tail in the lobby, perks its ears while you write, flattens them in the last 30 seconds, droops over "what to improve", and throws a party at the end. |
 | 🕶️ **Honest by design** | Cards stay private until reveal, authors stay anonymous (even to the host) unless shown, and votes stay hidden until discussion. All of it is enforced in the database. |
 | 🗳️ **Dot voting** | 3 votes each, and you can stack them on one card. Totals count up when discussion starts. |
 | 🎯 **Facilitation tools** | Phase stepper, a synced timer (start, pause, +1 min, reset, per-phase durations), focus mode, and an optional chime. |
 | 🔗 **Actions with receipts** | Every action item links back to the cards it came from. Turn any card into an action during discussion. |
 | 🌍 **Arabic and English** | Each person picks their language. The whole UI mirrors properly in RTL, animations included. |
-| 🌗 **Light and dark** | Claude's cream and charcoal palettes, with smooth theme transitions. |
+| 🌗 **Light and dark** | Warm cream and charcoal palettes, with smooth theme transitions. |
 | 📋 **Wrap-up** | A summary page with stats, confetti, copy-as-Markdown and print-to-PDF. |
 
 ### Meet the crew
@@ -105,8 +105,8 @@ These rules come from Postgres Row-Level Security and `SECURITY DEFINER` RPCs, n
 **Prerequisites:** Node 20+ and a free [Supabase](https://supabase.com) project.
 
 ```bash
-git clone https://github.com/A-Alhoshan/claude-retro.git
-cd claude-retro
+git clone https://github.com/A-Alhoshan/fox-retro.git
+cd fox-retro
 npm install
 cp .env.example .env.local   # then fill in your Supabase URL and anon key
 npm run dev
@@ -142,7 +142,7 @@ src/
 ├─ app/                 routes: landing, login, dashboard, /r/[code], summary
 │  └─ r/[code]/host-actions.ts   host-only Server Actions
 ├─ components/
-│  ├─ mascot/           pixel sprites + animated <Mascot>
+│  ├─ mascot/           pixel fox sprites + animated <Mascot>
 │  └─ retro/            board, cards, timer, host bar, action plan, summary
 ├─ i18n/                en / ar messages + RTL-aware provider
 └─ lib/domain/          pure logic: timer, votes, phases, mood, export
@@ -151,7 +151,7 @@ supabase/migrations/    schema, RLS, RPCs
 
 ## 🇸🇦 بالعربي
 
-**Claude Retro** أداة ريترو مباشرة لفرق سكرم، بهوية Claude.
+**Fox Retro** أداة ريترو مباشرة لفرق سكرم، نجمها ثعلب بكسلي صغير.
 
 - **السكرم ماستر** ينشئ الريترو، ويتحكم بالمراحل والمؤقت، وفي النهاية يكتب خطة العمل.
 - **المشاركين** يدخلون بالكود، ويكتبون اسمهم ويختارون دورهم: فريق سكرم، مالك المنتج، سكرم ماستر، أو مشاهد.
@@ -160,11 +160,9 @@ supabase/migrations/    schema, RLS, RPCs
   - الأسماء مجهولة بعد الكشف إلا إذا أظهرها المدير.
   - الأصوات مخفية لين النقاش.
   - كل هذا مفروض من قاعدة البيانات نفسها.
-- **شخصية Claude البكسلية** تنبسط وتتوتر وتحزن وتحتفل حسب مرحلة الجلسة.
+- **الثعلب البكسلي** يهز ذيله وينصب آذانه ويتوتر ويحزن ويحتفل حسب مرحلة الجلسة.
 - **الواجهة** بالعربي والإنجليزي، ودارك ولايت.
 
 ## 📄 Notes
 
 Built with ❤️ and [Claude Code](https://claude.com/claude-code).
-
-> This is an unofficial, independent project and is not affiliated with or endorsed by Anthropic. "Claude" and the Claude Code character are trademarks of Anthropic. The pixel mascot here is a fan recreation for internal team use. Review it before any commercial use.
