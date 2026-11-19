@@ -142,7 +142,7 @@ export const ar: Messages = {
     open: "افتح الملخص",
   },
   mascot: {
-    label: "Claude {mood}",
+    label: "الثعلب {mood}",
     happy: "مبسوط",
     wave: "يلوّح",
     jump: "ينقز",

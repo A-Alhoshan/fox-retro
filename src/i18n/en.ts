@@ -140,7 +140,7 @@ export const en = {
     open: "Open summary",
   },
   mascot: {
-    label: "Claude is {mood}",
+    label: "The fox is {mood}",
     happy: "happy",
     wave: "waving",
     jump: "jumping",

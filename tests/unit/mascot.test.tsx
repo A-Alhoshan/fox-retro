@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, act } from "@testing-library/react";
-import { SPRITES } from "@/components/mascot/sprites";
+import { SPRITES, POSES, draw } from "@/components/mascot/sprites";
 import { Mascot } from "@/components/mascot/Mascot";
 import { LocaleProvider } from "@/i18n/locale";
 import type { Mood } from "@/lib/domain/types";
@@ -47,6 +47,45 @@ describe("SPRITES", () => {
     }
   });
 
+  it.each(MOODS)("%s never clips", (m) => {
+    for (const pose of POSES[m].poses) {
+      let clipped = 0;
+      draw(pose, () => clipped++);
+      expect(clipped, JSON.stringify(pose)).toBe(0);
+    }
+  });
+
+  it("every frame looks like a fox (white muzzle, ears above the body)", () => {
+    for (const m of MOODS) {
+      for (const f of SPRITES[m].frames) {
+        expect(f.join(""), m).toContain("w");
+        const bodyRow = f.findIndex((r) => /o{10}/.test(r));
+        expect(bodyRow, m).toBeGreaterThan(0);
+        expect(f.slice(0, bodyRow).some((r) => r.includes("o")), m).toBe(true);
+      }
+    }
+  });
+
+  it("frame 0 of every mood shows the tail tip (reduced motion still reads as a fox)", () => {
+    for (const m of MOODS) {
+      const f = SPRITES[m].frames[0];
+      const bodyRow = f.findIndex((r) => /o{10}/.test(r));
+      expect(f.slice(bodyRow).some((r) => r.slice(13).includes("w")), m).toBe(true);
+    }
+  });
+
+  it("tail moves when happy and drops when sad", () => {
+    expect(draw({ tail: "wagA" })).not.toEqual(draw({ tail: "wagB" }));
+    expect(draw({ tail: "down" })).not.toEqual(draw({}));
+    expect(SPRITES.happy.frames.some((f, i, all) => i > 0 && f.join() !== all[0].join())).toBe(true);
+  });
+
+  it("ears change with mood", () => {
+    for (const ears of ["back", "droop", "perk"] as const) {
+      expect(draw({ ears }), ears).not.toEqual(draw({}));
+    }
+  });
+
   it("sad has a tear, happy has none", () => {
     expect(SPRITES.sad.frames.some((f) => f.join("").includes("t"))).toBe(true);
     expect(SPRITES.happy.frames.some((f) => f.join("").includes("t"))).toBe(false);
@@ -61,7 +100,7 @@ describe("<Mascot>", () => {
     const { getByRole } = wrap(<Mascot mood="sad" />);
     const svg = getByRole("img");
     expect(svg.getAttribute("shape-rendering")).toBe("crispEdges");
-    expect(svg.getAttribute("aria-label")).toBe("Claude is sad");
+    expect(svg.getAttribute("aria-label")).toBe("The fox is sad");
   });
 
   it("advances frames over time", () => {
