@@ -99,7 +99,10 @@ export function ActionItemRow({
           <button
             type="button"
             aria-label={t("common.delete")}
-            onClick={() => deleteActionItem(item.id)}
+            onClick={async () => {
+              await deleteActionItem(item.id);
+              data.notify("actions_changed");
+            }}
             className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="size-4" />
@@ -134,6 +137,7 @@ export function ActionPlan({ data }: { data: RetroData }) {
       return false;
     }
     setError(null);
+    data.notify("actions_changed");
     return true;
   };
 

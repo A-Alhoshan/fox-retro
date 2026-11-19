@@ -96,6 +96,21 @@ describe("ActionPlan", () => {
     expect(screen.getByRole("button", { name: "Add action" })).toBeInTheDocument();
   });
 
+  it("deleting an action refreshes everyone (realtime can't filter deletes)", async () => {
+    const d = data("action_plan");
+    wrap(<ActionPlan data={d} />);
+    await userEvent.click(within(screen.getByTestId("action-a1")).getByRole("button", { name: "Delete" }));
+    await vi.waitFor(() => expect(d.notify).toHaveBeenCalledWith("actions_changed"));
+  });
+
+  it("creating an action notifies too", async () => {
+    const d = data("action_plan");
+    wrap(<ActionPlan data={d} />);
+    await userEvent.type(screen.getByLabelText("What will we do?"), "New one");
+    await userEvent.click(screen.getByRole("button", { name: "Add action" }));
+    await vi.waitFor(() => expect(d.notify).toHaveBeenCalledWith("actions_changed"));
+  });
+
   it("shows each item with its ref chips; clicking a chip highlights the card", async () => {
     wrap(<ActionPlan data={data("action_plan")} />);
     const row = screen.getByTestId("action-a1");

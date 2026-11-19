@@ -43,7 +43,8 @@ export type CardView = {
   id: string;
   column: Column;
   text: string;
-  created_at: string;
+  /** only returned for the caller's own cards (others' times could unmask authors) */
+  created_at: string | null;
   author_participant_id: string | null;
   is_mine: boolean;
 };

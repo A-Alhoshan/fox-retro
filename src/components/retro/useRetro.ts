@@ -14,7 +14,7 @@ import type {
 } from "@/lib/domain/types";
 
 export type RetroStatus = "loading" | "not_found" | "needs_join" | "ready" | "error";
-export type RetroEvent = "cards_changed" | "votes_changed";
+export type RetroEvent = "cards_changed" | "votes_changed" | "actions_changed";
 
 export type RetroData = {
   status: RetroStatus;
@@ -195,6 +195,7 @@ export function useRetro(code: string): RetroData {
       )
       .on("broadcast", { event: "cards_changed" }, () => fetchCards(id))
       .on("broadcast", { event: "votes_changed" }, () => fetchVotes(id))
+      .on("broadcast", { event: "actions_changed" }, () => fetchActions(id))
       .on("presence", { event: "sync" }, () => setOnline(new Set(Object.keys(ch.presenceState()))))
       .subscribe((s) => {
         if (s === "SUBSCRIBED") {
@@ -222,10 +223,11 @@ export function useRetro(code: string): RetroData {
     (e: RetroEvent) => {
       if (!retroId) return;
       if (e === "cards_changed") fetchCards(retroId);
-      else fetchVotes(retroId);
+      else if (e === "votes_changed") fetchVotes(retroId);
+      else fetchActions(retroId);
       channelRef.current?.send({ type: "broadcast", event: e, payload: {} });
     },
-    [retroId, fetchCards, fetchVotes],
+    [retroId, fetchCards, fetchVotes, fetchActions],
   );
 
   const refresh = useCallback(async () => {

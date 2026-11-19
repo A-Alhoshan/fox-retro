@@ -60,6 +60,7 @@ export function ActionItemDialog({
                   return false;
                 }
                 setError(null);
+                data.notify("actions_changed");
                 onClose();
                 return true;
               }}
