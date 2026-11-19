@@ -145,6 +145,7 @@ export const en = {
     invalid: "Action text is required.",
   },
   summary: {
+    downloadWord: "Download Word",
     title: "Retro summary",
     participants: "Participants",
     cards: "Cards",

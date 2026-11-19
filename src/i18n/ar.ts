@@ -147,6 +147,7 @@ export const ar: Messages = {
     invalid: "نص البند مطلوب.",
   },
   summary: {
+    downloadWord: "تحميل Word",
     title: "ملخص الريترو",
     participants: "المشاركين",
     cards: "الكروت",

@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Copy, Check, Printer, Users, StickyNote, Vote } from "lucide-react";
+import { Copy, Check, Printer, Users, StickyNote, Vote, FileText, Loader2 } from "lucide-react";
 import { useT } from "@/i18n/locale";
 import { COLUMNS } from "@/lib/domain/types";
 import { toMarkdown } from "@/lib/domain/markdown";
-import { buildExport } from "@/lib/domain/export";
+import { buildExport, exportFileName } from "@/lib/domain/export";
 import { Mascot } from "@/components/mascot/Mascot";
 import type { RetroData } from "./useRetro";
 import { ActionItemRow } from "./ActionPlan";
@@ -19,6 +19,7 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
   const { t, locale } = useT();
   const retro = data.retro!;
   const [copied, setCopied] = useState(false);
+  const [building, setBuilding] = useState(false);
   const totalVotes = Object.values(data.totals).reduce((a, b) => a + b, 0);
   const created = new Date(retro.created_at);
   const date = Number.isNaN(created.getTime())
@@ -34,6 +35,22 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
       actions: data.actions,
     });
   const markdown = () => toMarkdown(model());
+
+  const downloadWord = async () => {
+    setBuilding(true);
+    try {
+      const m = model();
+      const { buildDocx } = await import("@/lib/export/docx");
+      const url = URL.createObjectURL(await buildDocx(m));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = exportFileName(m);
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } finally {
+      setBuilding(false);
+    }
+  };
 
   const stats = [
     { icon: Users, label: t("summary.participants"), n: data.participants.length },
@@ -70,12 +87,21 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
         <div className="no-print flex flex-wrap justify-center gap-2">
           <button
             type="button"
+            onClick={downloadWord}
+            disabled={building}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:brightness-105 disabled:opacity-70"
+          >
+            {building ? <Loader2 className="size-4 animate-spin" /> : <FileText className="size-4" />}
+            {t("summary.downloadWord")}
+          </button>
+          <button
+            type="button"
             onClick={async () => {
               await navigator.clipboard.writeText(markdown());
               setCopied(true);
               setTimeout(() => setCopied(false), 1600);
             }}
-            className="inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground hover:brightness-105"
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-medium hover:bg-accent"
           >
             {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
             {copied ? t("common.copied") : t("summary.copyMarkdown")}

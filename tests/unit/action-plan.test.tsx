@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, within, fireEvent } from "@testing-library/react";
+import { render, screen, within, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LocaleProvider } from "@/i18n/locale";
 import type { RetroData } from "@/components/retro/useRetro";
@@ -14,6 +14,8 @@ vi.mock("@/app/r/[code]/host-actions", () => ({
   setFocusedCard: vi.fn(async () => ({ ok: true })),
 }));
 vi.mock("@/lib/supabase/client", () => ({ createBrowserClient: () => ({}) }));
+const buildDocx = vi.fn(async (_m: { title: string; sections: { heading: string }[] }) => new Blob(["docx"]));
+vi.mock("@/lib/export/docx", () => ({ buildDocx: (m: never) => buildDocx(m) }));
 
 import { ActionPlan } from "@/components/retro/ActionPlan";
 import { ActionItemEditor } from "@/components/retro/ActionItemEditor";
@@ -182,6 +184,18 @@ describe("Summary", () => {
     d.retro!.created_at = "";
     wrap(<Summary data={d} celebrate={false} />);
     expect(screen.getByText("Sprint 24")).toBeInTheDocument();
+  });
+
+  it("downloads an English Word file named after the retro", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:x");
+    URL.revokeObjectURL = vi.fn();
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    wrap(<Summary data={data("summary")} celebrate={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Download Word" }));
+    await waitFor(() => expect(click).toHaveBeenCalled());
+    expect(buildDocx.mock.calls[0][0].title).toBe("Sprint 24");
+    expect(buildDocx.mock.calls[0][0].sections[0].heading).toBe("What went well");
+    expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe("sprint-24-retro-2026-11-19.docx");
   });
 
   it("renders actions with refs and copies Markdown", async () => {
