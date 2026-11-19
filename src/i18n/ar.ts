@@ -148,6 +148,7 @@ export const ar: Messages = {
   },
   summary: {
     downloadWord: "تحميل Word",
+    exportFailed: "ما قدرنا نجهّز الملف. حدّث الصفحة وجرّب مرة ثانية.",
     title: "ملخص الريترو",
     participants: "المشاركين",
     cards: "الكروت",

@@ -11,7 +11,7 @@ import {
   TextRun,
   WidthType,
 } from "docx";
-import { hasArabic, type ExportModel } from "@/lib/domain/export";
+import { isRtl, type ExportModel } from "@/lib/domain/export";
 
 const INK = "172B4D";
 const MUTED = "6B778C";
@@ -25,13 +25,21 @@ const borders = {
   right: { style: BorderStyle.SINGLE, size: 4, color: LINE },
 };
 
+/** one run per line, joined by Word line breaks; right-to-left when the text is */
+function runs(text: string, opts: { bold?: boolean } = {}): TextRun[] {
+  const rtl = isRtl(text) || undefined;
+  return text
+    .split(/\r?\n/)
+    .map((line, i) => new TextRun({ text: line, break: i ? 1 : undefined, rightToLeft: rtl, bold: opts.bold }));
+}
+
 /** a paragraph whose direction follows its text (Arabic cards read right-to-left) */
 function textPara(text: string, extra: TextRun[] = [], opts: { bullet?: boolean } = {}): Paragraph {
-  const rtl = hasArabic(text);
+  const rtl = isRtl(text);
   return new Paragraph({
     bidirectional: rtl || undefined,
     bullet: opts.bullet ? { level: 0 } : undefined,
-    children: [new TextRun({ text, rightToLeft: rtl || undefined }), ...extra],
+    children: [...runs(text), ...extra],
   });
 }
 
@@ -54,7 +62,7 @@ function infoTable(m: ExportModel): Table {
     ? new Paragraph({
         children: m.participants.flatMap((p, i) => [
           ...(i ? [new TextRun({ text: ", " })] : []),
-          new TextRun({ text: p.name, rightToLeft: hasArabic(p.name) || undefined }),
+          new TextRun({ text: p.name, rightToLeft: isRtl(p.name) || undefined }),
           new TextRun({ text: ` (${p.role})`, color: MUTED }),
         ]),
       })
@@ -89,11 +97,8 @@ function actionsTable(m: ExportModel): Table {
             children: [
               cell([
                 new Paragraph({
-                  bidirectional: hasArabic(a.text) || undefined,
-                  children: [
-                    new TextRun({ text: "☐ " }),
-                    new TextRun({ text: a.text, rightToLeft: hasArabic(a.text) || undefined }),
-                  ],
+                  bidirectional: isRtl(a.text) || undefined,
+                  children: [new TextRun({ text: "☐ " }), ...runs(a.text)],
                 }),
               ]),
               cell([textPara(a.owner || "—")]),
@@ -115,9 +120,9 @@ export async function buildDocx(m: ExportModel): Promise<Blob> {
   const body: (Paragraph | Table)[] = [
     new Paragraph({
       heading: HeadingLevel.HEADING_1,
-      bidirectional: hasArabic(m.title) || undefined,
+      bidirectional: isRtl(m.title) || undefined,
       spacing: { after: 200 },
-      children: [new TextRun({ text: m.title, rightToLeft: hasArabic(m.title) || undefined })],
+      children: runs(m.title),
     }),
     infoTable(m),
   ];
@@ -130,8 +135,8 @@ export async function buildDocx(m: ExportModel): Promise<Blob> {
         ? [
             new TextRun({
               // in an RTL paragraph: keep the gap on the Arabic side (RLM) and the label as one LTR block (LRE…PDF)
-              text: hasArabic(c.text) ? `‏   ‪${voteLabel(c.votes)}‬` : `   ${voteLabel(c.votes)}`,
-              rightToLeft: hasArabic(c.text) || undefined,
+              text: isRtl(c.text) ? `\u200F   \u202A${voteLabel(c.votes)}\u202C` : `   ${voteLabel(c.votes)}`,
+              rightToLeft: isRtl(c.text) || undefined,
               color: "BF2600",
               bold: true,
               size: 18,

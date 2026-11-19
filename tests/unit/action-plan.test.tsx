@@ -198,6 +198,14 @@ describe("Summary", () => {
     expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe("sprint-24-retro-2026-11-19.docx");
   });
 
+  it("tells the user when the Word file can't be built", async () => {
+    buildDocx.mockRejectedValueOnce(new Error("ChunkLoadError"));
+    wrap(<Summary data={data("summary")} celebrate={false} />);
+    await userEvent.click(screen.getByRole("button", { name: "Download Word" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Couldn't build the file");
+    expect(screen.getByRole("button", { name: "Download Word" })).not.toBeDisabled();
+  });
+
   it("renders actions with refs and copies Markdown", async () => {
     const writeText = vi.fn(async (_s: string) => {});
     Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });

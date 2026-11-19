@@ -1,5 +1,8 @@
 import type { ExportModel } from "./export";
 
+/** keep continuation lines inside their list item */
+const indent = (s: string) => s.replace(/\r?\n/g, "\n  ");
+
 /** Confluence-style retro page as Markdown, same structure as the Word export. */
 export function toMarkdown(m: ExportModel): string {
   const lines: string[] = [`# ${m.title}`, ""];
@@ -13,13 +16,13 @@ export function toMarkdown(m: ExportModel): string {
   for (const s of m.sections) {
     lines.push(`## ${s.heading}`, "");
     if (s.items.length === 0) lines.push("- None");
-    for (const c of s.items) lines.push(`- ${c.text}${c.votes ? ` (${c.votes})` : ""}`);
+    for (const c of s.items) lines.push(`- ${indent(c.text)}${c.votes ? ` (${c.votes})` : ""}`);
     lines.push("");
   }
   lines.push("## Action items", "");
   if (m.actions.length === 0) lines.push("No action items.");
   for (const a of m.actions) {
-    let line = `- [ ] ${a.text}`;
+    let line = `- [ ] ${indent(a.text)}`;
     if (a.owner) line += ` — ${a.owner}`;
     if (a.due) line += ` (${a.due})`;
     if (a.from.length) line += ` ↳ ${a.from.join("; ")}`;

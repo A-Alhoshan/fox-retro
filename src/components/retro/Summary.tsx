@@ -20,6 +20,7 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
   const retro = data.retro!;
   const [copied, setCopied] = useState(false);
   const [building, setBuilding] = useState(false);
+  const [exportFailed, setExportFailed] = useState(false);
   const totalVotes = Object.values(data.totals).reduce((a, b) => a + b, 0);
   const created = new Date(retro.created_at);
   const date = Number.isNaN(created.getTime())
@@ -38,6 +39,7 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
 
   const downloadWord = async () => {
     setBuilding(true);
+    setExportFailed(false);
     try {
       const m = model();
       const { buildDocx } = await import("@/lib/export/docx");
@@ -47,6 +49,9 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
       a.download = exportFileName(m);
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      // usually a stale tab after a deploy: the lazy docx chunk is gone
+      setExportFailed(true);
     } finally {
       setBuilding(false);
     }
@@ -84,6 +89,11 @@ export function Summary({ data, celebrate = true }: { data: RetroData; celebrate
             </motion.div>
           ))}
         </div>
+        {exportFailed && (
+          <p role="alert" className="no-print rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {t("summary.exportFailed")}
+          </p>
+        )}
         <div className="no-print flex flex-wrap justify-center gap-2">
           <button
             type="button"

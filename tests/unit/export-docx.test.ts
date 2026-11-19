@@ -88,6 +88,23 @@ describe("buildDocx", () => {
     expect(table).toContain("27 Nov 2026");
   });
 
+  it("keeps line breaks inside a card", async () => {
+    const doc = await xml({
+      ...model,
+      sections: [{ heading: "Ideas", items: [{ text: "line one\nline two", votes: 0 }] }],
+    });
+    expect(doc).toMatch(/line one<\/w:t>[\s\S]*<w:br\/>[\s\S]*line two/);
+    expect(doc).not.toContain("line one\nline two");
+  });
+
+  it("keeps an English card with one Arabic word left-to-right", async () => {
+    const doc = await xml({
+      ...model,
+      sections: [{ heading: "Ideas", items: [{ text: "Thanks to محمد", votes: 0 }] }],
+    });
+    expect(paragraphOf(doc, "Thanks to")).not.toContain("<w:bidi");
+  });
+
   it("handles an empty retro", async () => {
     const doc = await xml({
       ...model,

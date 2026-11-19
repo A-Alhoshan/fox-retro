@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildExport, exportFileName, hasArabic, type ExportInput } from "@/lib/domain/export";
+import { buildExport, exportFileName, isRtl, type ExportInput } from "@/lib/domain/export";
 import { toMarkdown } from "@/lib/domain/markdown";
 import type { CardView, ParticipantRow, RetroRow } from "@/lib/domain/types";
 
@@ -130,10 +130,23 @@ describe("exportFileName", () => {
   });
 });
 
-describe("hasArabic", () => {
-  it("detects Arabic script", () => {
-    expect(hasArabic("التعاون")).toBe(true);
-    expect(hasArabic("Pairing")).toBe(false);
+describe("isRtl", () => {
+  it("follows the first strong letter, like Word and browsers", () => {
+    expect(isRtl("التعاون")).toBe(true);
+    expect(isRtl("Pairing")).toBe(false);
+    expect(isRtl("Thanks to محمد for the demo")).toBe(false);
+    expect(isRtl("محمد did the demo")).toBe(true);
+    expect(isRtl("🎉 3 التعاون")).toBe(true);
+    expect(isRtl("﻿hello")).toBe(false);
+  });
+});
+
+describe("invalid created_at", () => {
+  it.each(["", "garbage"])("%j still gives a valid file name and a dash for the date", (created_at) => {
+    const m = buildExport({ ...input, retro: { ...retro, created_at } });
+    expect(m.dateLabel).toBe("—");
+    expect(m.isoDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(exportFileName(m)).toMatch(/^sprint-24-retro-\d{4}-\d{2}-\d{2}\.docx$/);
   });
 });
 
@@ -148,6 +161,11 @@ describe("toMarkdown", () => {
     expect(md).toContain("- Demos (4)");
     expect(md).toContain("- [ ] Fix CI — Omar (27 Nov 2026)");
     expect(md.indexOf("Demos")).toBeLessThan(md.indexOf("Pairing"));
+  });
+
+  it("keeps multi-line cards inside their bullet", () => {
+    const md = toMarkdown(buildExport({ ...input, cards: [card("c9", "ideas", "line one\nline two")], totals: {} }));
+    expect(md).toContain("- line one\n  line two");
   });
 
   it("handles an empty retro", () => {

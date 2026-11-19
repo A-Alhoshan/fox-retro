@@ -146,6 +146,7 @@ export const en = {
   },
   summary: {
     downloadWord: "Download Word",
+    exportFailed: "Couldn't build the file. Reload the page and try again.",
     title: "Retro summary",
     participants: "Participants",
     cards: "Cards",
