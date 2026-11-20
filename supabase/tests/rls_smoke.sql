@@ -63,6 +63,42 @@ begin
     res := res || E'\n2c 4th vote rejected: FAIL';
   exception when others then res := res || E'\n2c 4th vote rejected: ok';
   end;
+  -- 2d. host-set vote count: raise to 5 lets a 4th vote in; lower to 2 keeps votes but blocks new ones
+  perform set_config('request.jwt.claims', json_build_object('sub', h, 'role', 'authenticated')::text, true);
+  update public.retros set votes_per_person = 5 where id = r;
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated', 'is_anonymous', true)::text, true);
+  begin
+    insert into public.votes (retro_id, card_id, participant_id) values (r, cb, pb);
+    res := res || E'\n2d 4th vote allowed at limit 5: ok';
+  exception when others then res := res || E'\n2d 4th vote allowed at limit 5: FAIL ' || sqlerrm;
+  end;
+  perform set_config('request.jwt.claims', json_build_object('sub', h, 'role', 'authenticated')::text, true);
+  update public.retros set votes_per_person = 2 where id = r;
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated', 'is_anonymous', true)::text, true);
+  select count(*) into k from public.votes v where v.participant_id = pb;
+  res := res || E'\n2e lowered limit keeps votes: ' || case when k = 4 then 'ok' else 'FAIL ' || k end;
+  begin
+    insert into public.votes (retro_id, card_id, participant_id) values (r, cb, pb);
+    res := res || E'\n2f lowered limit blocks new: FAIL';
+  exception when others then res := res || E'\n2f lowered limit blocks new: ok';
+  end;
+  delete from public.votes where id = (select v.id from public.votes v where v.participant_id = pb and v.card_id = cb limit 1);
+  select count(*) into k from public.votes v where v.participant_id = pb;
+  res := res || E'\n2g unvote still allowed: ' || case when k = 3 then 'ok' else 'FAIL ' || k end;
+  perform set_config('request.jwt.claims', json_build_object('sub', h, 'role', 'authenticated')::text, true);
+  begin
+    update public.retros set votes_per_person = 11 where id = r;
+    res := res || E'\n2h limit above 10 rejected: FAIL';
+  exception when others then res := res || E'\n2h limit above 10 rejected: ok';
+  end;
+  perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated', 'is_anonymous', true)::text, true);
+  begin
+    update public.retros set votes_per_person = 10 where id = r;
+    select votes_per_person into k from public.retros where id = r;
+    res := res || E'\n2i participant cannot change limit: ' || case when k = 2 then 'ok' else 'FAIL ' || k end;
+  exception when others then res := res || E'\n2i participant cannot change limit: ok';
+  end;
+
   select count(*) into k from public.get_vote_totals(r);
   res := res || E'\n2b totals hidden in voting: ' || case when k = 0 then 'ok' else 'FAIL' end;
 
