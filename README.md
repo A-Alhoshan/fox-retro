@@ -120,11 +120,10 @@ npm run dev
    ```sql
    insert into public.host_domains (domain) values ('yourcompany.com');
    ```
-5. *(Recommended for teams)* Set up custom SMTP. Supabase's built-in sender only emails your Supabase team members and allows a few emails an hour. A free option with no domain is a dedicated Gmail account:
-   - Turn on 2-Step Verification, then create an **App password** (Google Account → Security).
-   - In **Authentication → Emails → SMTP Settings**: host `smtp.gmail.com`, port `465`, username and sender email = the Gmail address, password = the app password, sender name `Fox Retro`.
-   - Raise **Authentication → Rate Limits → emails per hour** (Gmail allows roughly 500 a day).
-   - Keep the app password out of the repo and out of Vercel. It only lives in Supabase.
+5. *(Recommended for teams)* Set up custom SMTP. Supabase's built-in sender only emails your Supabase team members and allows a few emails an hour. This project uses [Resend](https://resend.com) (free: 100 emails a day, 3,000 a month):
+   - Add a sending subdomain in Resend (e.g. `mail.yourdomain.com`) and add the 4 DNS records it shows (DKIM, SPF MX/TXT, return-path CNAME). A subdomain keeps your main domain's mailbox untouched.
+   - In Resend, open **Settings → Integrations → Supabase** and connect your project. It creates the API key and fills in Supabase's SMTP settings for you, so the key never has to be copied by hand.
+   - Sender: `Fox Retro <login@mail.yourdomain.com>`.
 
 **Deploy:** import the repo into Vercel and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Never put the service-role key on Vercel.
 
