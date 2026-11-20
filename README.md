@@ -120,7 +120,11 @@ npm run dev
    ```sql
    insert into public.host_domains (domain) values ('yourcompany.com');
    ```
-5. *(Recommended for teams)* Set up custom SMTP. Supabase's built-in email sender is heavily rate-limited.
+5. *(Recommended for teams)* Set up custom SMTP. Supabase's built-in sender only emails your Supabase team members and allows a few emails an hour. A free option with no domain is a dedicated Gmail account:
+   - Turn on 2-Step Verification, then create an **App password** (Google Account → Security).
+   - In **Authentication → Emails → SMTP Settings**: host `smtp.gmail.com`, port `465`, username and sender email = the Gmail address, password = the app password, sender name `Fox Retro`.
+   - Raise **Authentication → Rate Limits → emails per hour** (Gmail allows roughly 500 a day).
+   - Keep the app password out of the repo and out of Vercel. It only lives in Supabase.
 
 **Deploy:** import the repo into Vercel and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Never put the service-role key on Vercel.
 
