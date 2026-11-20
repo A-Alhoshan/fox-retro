@@ -15,13 +15,13 @@ vi.mock("@/app/login/actions", () => ({ checkEmail, createAccount, signInWithPin
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh: vi.fn() }) }));
 vi.mock("@/components/SiteHeader", () => ({ SiteHeader: () => null }));
 
-import LoginPage from "@/app/login/page";
+import { LoginForm } from "@/app/login/LoginForm";
 
 const en = messages.en.login;
-const ui = (locale: "en" | "ar" = "en") =>
+const ui = (locale: "en" | "ar" = "en", linkError = false) =>
   render(
     <LocaleProvider initial={locale}>
-      <LoginPage />
+      <LoginForm linkError={linkError} />
     </LocaleProvider>,
   );
 
@@ -79,6 +79,11 @@ describe("login page", () => {
     await userEvent.type(screen.getByLabelText(en.pinConfirm), "12345");
     await userEvent.click(screen.getByRole("button", { name: en.create }));
     expect(await screen.findByText(en.weak)).toBeInTheDocument();
+  });
+
+  it("explains a reset link that failed (e.g. opened on another device)", () => {
+    ui("en", true);
+    expect(screen.getByRole("alert")).toHaveTextContent(en.linkFailed);
   });
 
   it("renders in Arabic", () => {

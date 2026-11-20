@@ -4,13 +4,14 @@ import { pinPassword } from "@/lib/domain/pin";
 const rpc = vi.fn();
 const signInWithPassword = vi.fn();
 const signUp = vi.fn();
+const signOut = vi.fn();
 const resetPasswordForEmail = vi.fn();
 const updateUser = vi.fn();
 const getUser = vi.fn();
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: async () => ({
     rpc,
-    auth: { signInWithPassword, signUp, resetPasswordForEmail, updateUser, getUser },
+    auth: { signInWithPassword, signUp, signOut, resetPasswordForEmail, updateUser, getUser },
   }),
 }));
 
@@ -22,7 +23,7 @@ const check = (exists: boolean, locked: string | null = null) =>
   ({ data: [{ account_exists: exists, locked_until: locked }], error: null });
 
 beforeEach(() => {
-  for (const f of [rpc, signInWithPassword, signUp, resetPasswordForEmail, updateUser, getUser]) f.mockReset();
+  for (const f of [rpc, signInWithPassword, signUp, signOut, resetPasswordForEmail, updateUser, getUser]) f.mockReset();
   process.env.PIN_SECRET = SECRET;
   delete process.env.ALLOWED_HOST_EMAIL_DOMAINS;
 });
@@ -55,10 +56,15 @@ describe("checkEmail", () => {
 });
 
 describe("signInWithPin", () => {
-  it("signs in with the derived password and clears failures", async () => {
-    rpc.mockResolvedValueOnce(check(true)).mockResolvedValueOnce({ data: null, error: null });
+  const begin = (exists: boolean, locked: string | null = null) =>
+    ({ data: [{ account_exists: exists, locked_until: locked }], error: null });
+  const ok = { data: null, error: null };
+
+  it("reserves an attempt first, signs in, then clears", async () => {
+    rpc.mockResolvedValueOnce(begin(true)).mockResolvedValueOnce(ok);
     signInWithPassword.mockResolvedValue({ error: null });
     expect(await signInWithPin(" Host@X.com", "48213")).toEqual({ ok: true });
+    expect(rpc.mock.calls[0]).toEqual(["pin_begin", { p_key: SECRET, p_email: "host@x.com" }]);
     expect(signInWithPassword).toHaveBeenCalledWith({
       email: "host@x.com",
       password: pinPassword(SECRET, "host@x.com", "48213"),
@@ -67,35 +73,47 @@ describe("signInWithPin", () => {
   });
 
   it("accepts Arabic digits", async () => {
-    rpc.mockResolvedValueOnce(check(true)).mockResolvedValueOnce({ data: null, error: null });
+    rpc.mockResolvedValueOnce(begin(true)).mockResolvedValueOnce(ok);
     signInWithPassword.mockResolvedValue({ error: null });
     expect(await signInWithPin("host@x.com", "٤٨٢١٣")).toEqual({ ok: true });
     expect(signInWithPassword.mock.calls[0][0].password).toBe(pinPassword(SECRET, "host@x.com", "48213"));
   });
 
-  it("counts a wrong PIN as a failure", async () => {
-    rpc.mockResolvedValueOnce(check(true)).mockResolvedValueOnce({ data: null, error: null });
+  it("confirms a wrong PIN as a failure", async () => {
+    rpc.mockResolvedValueOnce(begin(true)).mockResolvedValueOnce(ok);
     signInWithPassword.mockResolvedValue({ error: { code: "invalid_credentials" } });
     expect(await signInWithPin("host@x.com", "48213")).toEqual({ error: "wrong_pin" });
     expect(rpc).toHaveBeenLastCalledWith("pin_record", { p_key: SECRET, p_email: "host@x.com", p_ok: false });
   });
 
-  it("locks on the fifth failure", async () => {
-    rpc.mockResolvedValueOnce(check(true)).mockResolvedValueOnce({ data: inMin(15), error: null });
+  it("locks when the failure is the fifth", async () => {
+    rpc.mockResolvedValueOnce(begin(true)).mockResolvedValueOnce({ data: inMin(15), error: null });
     signInWithPassword.mockResolvedValue({ error: { code: "invalid_credentials" } });
     expect(await signInWithPin("host@x.com", "48213")).toEqual({ locked: 15 });
   });
 
-  it("does not count a network error", async () => {
-    rpc.mockResolvedValueOnce(check(true));
+  it("gives the attempt back on a network error", async () => {
+    rpc.mockResolvedValueOnce(begin(true)).mockResolvedValueOnce(ok);
     signInWithPassword.mockResolvedValue({ error: { code: "unexpected_failure" } });
     expect(await signInWithPin("host@x.com", "48213")).toEqual({ error: "failed" });
-    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenLastCalledWith("pin_release", { p_key: SECRET, p_email: "host@x.com" });
   });
 
-  it("refuses even the right PIN while locked", async () => {
-    rpc.mockResolvedValueOnce(check(true, inMin(10)));
+  it("refuses without trying when no slot is free (locked)", async () => {
+    rpc.mockResolvedValueOnce(begin(true, inMin(10)));
     expect(await signInWithPin("host@x.com", "48213")).toEqual({ locked: 10 });
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("answers wrong_pin for an unknown email without calling auth", async () => {
+    rpc.mockResolvedValueOnce(begin(false));
+    expect(await signInWithPin("ghost@x.com", "48213")).toEqual({ error: "wrong_pin" });
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it("fails closed if the reservation errors", async () => {
+    rpc.mockResolvedValueOnce({ data: null, error: { message: "db down" } });
+    expect(await signInWithPin("host@x.com", "48213")).toEqual({ error: "failed" });
     expect(signInWithPassword).not.toHaveBeenCalled();
   });
 
@@ -151,9 +169,11 @@ describe("setNewPin", () => {
   it("updates the password and clears the lock", async () => {
     getUser.mockResolvedValue({ data: { user: { email: "host@x.com", is_anonymous: false } } });
     updateUser.mockResolvedValue({ error: null });
+    signOut.mockResolvedValue({ error: null });
     rpc.mockResolvedValue({ data: null, error: null });
     expect(await setNewPin("48213", "48213")).toEqual({ ok: true });
     expect(updateUser).toHaveBeenCalledWith({ password: pinPassword(SECRET, "host@x.com", "48213") });
     expect(rpc).toHaveBeenCalledWith("pin_record", { p_key: SECRET, p_email: "host@x.com", p_ok: true });
+    expect(signOut).toHaveBeenCalledWith({ scope: "others" });
   });
 });

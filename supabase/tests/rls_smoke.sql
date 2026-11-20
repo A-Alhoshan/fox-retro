@@ -161,8 +161,12 @@ begin
   end;
   declare t timestamptz; ex boolean;
   begin
-    for i in 1..4 loop t := public.pin_record('smoke-key', 'Host@X.test', false); end loop;
+    for i in 1..4 loop
+      perform public.pin_begin('smoke-key', 'Host@X.test');
+      t := public.pin_record('smoke-key', 'Host@X.test', false);
+    end loop;
     res := res || E'\n7b four failures not locked: ' || case when t is null then 'ok' else 'FAIL' end;
+    perform public.pin_begin('smoke-key', ' host@x.test ');
     t := public.pin_record('smoke-key', ' host@x.test ', false);
     res := res || E'\n7c fifth failure locks ~15m: '
       || case when t between now() + interval '14 minutes' and now() + interval '16 minutes' then 'ok' else 'FAIL ' || coalesce(t::text, 'null') end;
@@ -173,6 +177,14 @@ begin
     res := res || E'\n7e success clears lock: ' || case when t is null then 'ok' else 'FAIL' end;
     select c.account_exists into ex from public.pin_check('smoke-key', 'nobody@x.test') c;
     res := res || E'\n7f unknown email not found: ' || case when not ex then 'ok' else 'FAIL' end;
+    -- 7g. six reservations in a row (as parallel requests would): only 5 get a slot
+    perform public.pin_record('smoke-key', 'host@x.test', true);
+    k := 0;
+    for i in 1..6 loop
+      select b.locked_until into t from public.pin_begin('smoke-key', 'host@x.test') b;
+      if t is null then k := k + 1; end if;
+    end loop;
+    res := res || E'\n7g only 5 slots: ' || case when k = 5 and t is not null then 'ok' else 'FAIL ' || k end;
   end;
 
   raise exception 'SMOKE REPORT:%', res;

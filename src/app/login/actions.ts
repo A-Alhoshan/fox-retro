@@ -23,8 +23,10 @@ function cleanEmail(email: string): string | Err {
 
 const minutesLeft = (until: string) => Math.max(1, Math.ceil((new Date(until).getTime() - Date.now()) / 60_000));
 
-async function pinCheck(sb: SupabaseClient, key: string, email: string) {
-  const { data, error } = await sb.rpc("pin_check", { p_key: key, p_email: email });
+const pinCheck = (sb: SupabaseClient, key: string, email: string) => pinCall(sb, "pin_check", key, email);
+
+async function pinCall(sb: SupabaseClient, fn: "pin_check" | "pin_begin", key: string, email: string) {
+  const { data, error } = await sb.rpc(fn, { p_key: key, p_email: email });
   const row = Array.isArray(data) ? data[0] : data;
   if (error || !row) return null;
   return { exists: Boolean(row.account_exists), lockedUntil: (row.locked_until as string | null) ?? null };
@@ -76,15 +78,21 @@ export async function signInWithPin(email: string, pin: string): Promise<{ ok: t
   const key = secret();
   if (!key) return { error: "failed" };
   const sb = await createServerClient();
-  const c = await pinCheck(sb, key, clean);
+  // Reserve an attempt first (row-locked in the DB) so parallel requests can't slip past the lock.
+  const c = await pinCall(sb, "pin_begin", key, clean);
   if (!c) return { error: "failed" };
   if (c.lockedUntil) return { locked: minutesLeft(c.lockedUntil) };
+  // Unknown email: answer like a wrong PIN without spending the shared auth rate limit.
+  if (!c.exists) return { error: "wrong_pin" };
   const { error } = await sb.auth.signInWithPassword({ email: clean, password: pinPassword(key, clean, p) });
   if (!error) {
     await pinRecord(sb, key, clean, true);
     return { ok: true };
   }
-  if (error.code !== "invalid_credentials") return { error: "failed" };
+  if (error.code !== "invalid_credentials") {
+    await sb.rpc("pin_release", { p_key: key, p_email: clean });
+    return { error: "failed" };
+  }
   const until = await pinRecord(sb, key, clean, false);
   return until ? { locked: minutesLeft(until) } : { error: "wrong_pin" };
 }
@@ -110,6 +118,8 @@ export async function setNewPin(pin: string, confirm: string): Promise<{ ok: tru
   const email = user.email.toLowerCase();
   const { error } = await sb.auth.updateUser({ password: pinPassword(key, email, p) });
   if (error) return { error: "failed" };
+  // A new PIN ends every other session, so whoever registered this email first is kicked out.
+  await sb.auth.signOut({ scope: "others" });
   await pinRecord(sb, key, email, true);
   return { ok: true };
 }
