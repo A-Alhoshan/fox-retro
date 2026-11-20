@@ -6,7 +6,7 @@
 </picture>
 
 <p>
-  <a href="https://fox-retro.vercel.app"><b>Live demo</b></a> ·
+  <a href="https://retro.sanamworks.com"><b>Live demo</b></a> ·
   <a href="#-features">Features</a> ·
   <a href="#-how-a-retro-flows">How it flows</a> ·
   <a href="#-getting-started">Getting started</a>
