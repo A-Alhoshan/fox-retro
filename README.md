@@ -114,18 +114,24 @@ npm run dev
 **Supabase setup**
 
 1. Run `supabase/migrations/*.sql` in order in the SQL editor.
-2. Go to **Authentication → Sign In / Providers** and enable **Email** and **Allow anonymous sign-ins**.
-3. Go to **Authentication → URL Configuration**. Set the Site URL to your deployment and add `<url>/auth/callback` (plus `http://localhost:3000/auth/callback`) as redirect URLs.
-4. *(Optional)* Only let your company host:
+2. Go to **Authentication → Sign In / Providers**: enable **Email** and **Allow anonymous sign-ins**, and turn **Confirm email off** (hosts sign in with email + a 5-digit PIN, so sign-up sends no email).
+3. Hosts sign in with a PIN. Generate a long random `PIN_SECRET` (e.g. `openssl rand -base64 48`), put it in `.env.local` and on Vercel, and store only its hash:
+   ```sql
+   insert into private.app_secrets (name, value_hash)
+   values ('pin_key', encode(extensions.digest('<PIN_SECRET>', 'sha256'), 'hex'));
+   ```
+   Five wrong PINs lock an email for 15 minutes.
+4. Go to **Authentication → URL Configuration**. Set the Site URL to your deployment and add `<url>/auth/callback` (plus `http://localhost:3000/auth/callback`) as redirect URLs.
+5. *(Optional)* Only let your company host:
    ```sql
    insert into public.host_domains (domain) values ('yourcompany.com');
    ```
-5. *(Recommended for teams)* Set up custom SMTP. Supabase's built-in sender only emails your Supabase team members and allows a few emails an hour. This project uses [Resend](https://resend.com) (free: 100 emails a day, 3,000 a month):
+6. *(Recommended)* Set up custom SMTP for the "Forgot your PIN?" email. Supabase's built-in sender only emails your Supabase team members and allows a few emails an hour. This project uses [Resend](https://resend.com) (free: 100 emails a day, 3,000 a month):
    - Add a sending subdomain in Resend (e.g. `mail.yourdomain.com`) and add the 4 DNS records it shows (DKIM, SPF MX/TXT, return-path CNAME). A subdomain keeps your main domain's mailbox untouched.
    - In Resend, open **Settings → Integrations → Supabase** and connect your project. It creates the API key and fills in Supabase's SMTP settings for you, so the key never has to be copied by hand.
    - Sender: `Fox Retro <login@mail.yourdomain.com>`.
 
-**Deploy:** import the repo into Vercel and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Never put the service-role key on Vercel.
+**Deploy:** import the repo into Vercel and set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `PIN_SECRET`. Never put the service-role key on Vercel.
 
 ## 🧪 Development
 
