@@ -30,10 +30,11 @@ export function ActionItemDialog({
     <AnimatePresence>
       {cardId && (
         <motion.div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           onClick={onClose}
         >
           <motion.div
@@ -45,7 +46,7 @@ export function ActionItemDialog({
             animate={{ y: 0, scale: 1 }}
             exit={{ y: 12, scale: 0.98, opacity: 0 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="w-full max-w-lg"
+            className="will-change-transform w-full max-w-lg"
           >
             <h2 className="mb-3 text-2xl text-white">{t("actions.add")}</h2>
             <ActionItemEditor

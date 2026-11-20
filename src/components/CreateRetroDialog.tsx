@@ -40,10 +40,11 @@ export function CreateRetroDialog({ open, onClose }: { open: boolean; onClose: (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           onClick={onClose}
         >
           <motion.form
@@ -56,7 +57,7 @@ export function CreateRetroDialog({ open, onClose }: { open: boolean; onClose: (
             animate={{ y: 0, scale: 1, opacity: 1 }}
             exit={{ y: 12, scale: 0.98, opacity: 0 }}
             transition={{ type: "spring", stiffness: 380, damping: 30 }}
-            className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
+            className="will-change-transform w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl"
           >
             <h2 id="create-title" className="mb-4 text-2xl">
               {t("dashboard.new")}
