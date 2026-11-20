@@ -68,6 +68,7 @@ export function BoardPreview() {
       timer_started: true,
       phase_durations: {},
       show_authors: false,
+      votes_per_person: 3,
       focused_card_id: phase === "discussion" ? focused : null,
       created_at: "",
     },

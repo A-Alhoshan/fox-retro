@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Vote } from "lucide-react";
 import { useT } from "@/i18n/locale";
 import { COLUMNS } from "@/lib/domain/types";
-import { canVote, votesLeft } from "@/lib/domain/votes";
+import { canVote, votesLeft, votesLimit } from "@/lib/domain/votes";
 import { setFocusedCard } from "@/app/r/[code]/host-actions";
 import type { RetroData } from "./useRetro";
 import { Card } from "./Card";
@@ -30,7 +30,8 @@ export function Board({
   const [error, setError] = useState<string | null>(null);
   const people = useMemo(() => new Map(data.participants.map((p) => [p.id, p])), [data.participants]);
   const myVoteCount = data.myVotes.length;
-  const voteOk = canVote(me.role, phase, myVoteCount);
+  const voteLimit = votesLimit(retro);
+  const voteOk = canVote(me.role, phase, myVoteCount, voteLimit);
   const showTotals = phase === "discussion" || phase === "action_plan";
   const writer = me.role !== "viewer";
 
@@ -69,7 +70,7 @@ export function Board({
           className="inline-flex w-fit items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
         >
           <Vote className="size-4" />
-          {t("vote.remaining", { n: votesLeft(myVoteCount) })}
+          {t("vote.remaining", { n: votesLeft(myVoteCount, voteLimit) })}
         </motion.div>
       )}
 

@@ -65,6 +65,7 @@ function data(phase: Phase, o: Partial<RetroData> = {}): RetroData {
       timer_started: false,
       phase_durations: {},
       show_authors: false,
+      votes_per_person: 3,
       focused_card_id: null,
       created_at: "2026-11-19T10:00:00Z",
     },

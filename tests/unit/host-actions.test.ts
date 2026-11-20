@@ -29,6 +29,7 @@ import {
   setShowAuthors,
   setFocusedCard,
   setPhaseDuration,
+  setVotesPerPerson,
 } from "@/app/r/[code]/host-actions";
 import { DEFAULT_PHASE_MS } from "@/lib/domain/timer";
 
@@ -60,6 +61,7 @@ describe("host actions (Review Focus 5)", () => {
     ["setShowAuthors", () => setShowAuthors("r1", true)],
     ["setFocusedCard", () => setFocusedCard("r1", "c1")],
     ["setPhaseDuration", () => setPhaseDuration("r1", "writing", 60_000)],
+    ["setVotesPerPerson", () => setVotesPerPerson("r1", 5)],
   ])("%s returns forbidden for a non-host and writes nothing", async (_n, call) => {
     state.isHost = false;
     expect(await call()).toEqual({ error: "forbidden" });
@@ -149,5 +151,19 @@ describe("host actions (Review Focus 5)", () => {
     await setShowAuthors("r1", true);
     await setFocusedCard("r1", null);
     expect(updates.map((u) => u.patch)).toEqual([{ show_authors: true }, { focused_card_id: null }]);
+  });
+});
+
+describe("setVotesPerPerson", () => {
+  it("saves a whole number from 1 to 10", async () => {
+    state.isHost = true;
+    expect(await setVotesPerPerson("r1", 5)).toEqual({ ok: true });
+    expect(updates.at(-1)).toEqual({ table: "retros", patch: { votes_per_person: 5 } });
+  });
+
+  it.each([0, 11, 2.5, Number.NaN])("rejects %s and writes nothing", async (n) => {
+    state.isHost = true;
+    expect(await setVotesPerPerson("r1", n)).toEqual({ error: "invalid" });
+    expect(updates).toHaveLength(0);
   });
 });

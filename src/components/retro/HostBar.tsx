@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Plus, Eye, EyeOff, Crown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Plus, Eye, EyeOff, Crown, Vote } from "lucide-react";
 import { useT } from "@/i18n/locale";
 import { nextPhase, prevPhase } from "@/lib/domain/phases";
 import { phaseDuration, remainingMs } from "@/lib/domain/timer";
+import { MAX_VOTES, MIN_VOTES, votesLimit } from "@/lib/domain/votes";
 import type { RetroRow } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 import { Hint } from "@/components/ui/hint";
@@ -51,6 +52,10 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
   const duration = phaseDuration(retro.phase, retro.phase_durations);
   const [minutes, setMinutes] = useState(String(Math.round(duration / 60000)));
   useEffect(() => setMinutes(String(Math.round(duration / 60000))), [duration]);
+  const limit = votesLimit(retro);
+  // a draft only while the host is typing; otherwise show the live value
+  const [votesDraft, setVotesDraft] = useState<string | null>(null);
+  const votes = votesDraft ?? String(limit);
 
   const left = remainingMs(
     { endsAt: retro.timer_ends_at, remainingMs: retro.timer_remaining_ms },
@@ -153,6 +158,34 @@ export function HostBar({ retro, offsetMs }: { retro: RetroRow; offsetMs: number
             <span>min</span>
           </label>
         </Hint>
+
+        {retro.phase === "voting" && (
+          <>
+            <span className="mx-1 h-6 w-px shrink-0 bg-border" />
+            <Hint title={t("host.votes")} description={t("hint.votes")}>
+              <label className="flex items-center gap-1 rounded-full px-2 text-xs text-muted-foreground">
+                <Vote className="size-4" />
+                <input
+                  type="number"
+                  min={MIN_VOTES}
+                  max={MAX_VOTES}
+                  step={1}
+                  value={votes}
+                  aria-label={t("host.votes")}
+                  onChange={(e) => setVotesDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
+                  onBlur={() => {
+                    const n = Number(votes);
+                    setVotesDraft(null);
+                    if (Number.isInteger(n) && n >= MIN_VOTES && n <= MAX_VOTES && n !== limit)
+                      run(() => host.setVotesPerPerson(retro.id, n));
+                  }}
+                  className="h-8 w-11 rounded-lg border border-input bg-background text-center text-sm text-foreground tabular-nums outline-none focus:border-primary"
+                />
+              </label>
+            </Hint>
+          </>
+        )}
 
         <span className="mx-1 h-6 w-px shrink-0 bg-border" />
 

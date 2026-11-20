@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { phaseDuration, remainingMs } from "@/lib/domain/timer";
 import type { Phase, RetroRow } from "@/lib/domain/types";
 import { PHASES } from "@/lib/domain/phases";
+import { MAX_VOTES, MIN_VOTES } from "@/lib/domain/votes";
 
 type Result = { ok: true } | { error: "forbidden" | "invalid" | "failed" };
 type Patch = Partial<Omit<RetroRow, "id" | "code" | "host_user_id" | "created_at">>;
@@ -189,4 +190,9 @@ export async function reorderActionItems(retroId: string, ids: string[]): Promis
     if (error) return { error: "failed" };
   }
   return { ok: true };
+}
+
+export async function setVotesPerPerson(retroId: string, n: number): Promise<Result> {
+  if (!Number.isInteger(n) || n < MIN_VOTES || n > MAX_VOTES) return { error: "invalid" };
+  return asHost(retroId, () => ({ votes_per_person: n }));
 }

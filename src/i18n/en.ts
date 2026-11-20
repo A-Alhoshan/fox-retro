@@ -115,6 +115,7 @@ export const en = {
     timesUp: "Time's up!",
   },
   hint: {
+    votes: "How many votes each person gets (1–10). Lowering it keeps votes already cast but blocks new ones.",
     prev: "Take everyone back to the previous phase.",
     next: "Move everyone to the next phase. The timer never does this on its own.",
     start: "Start the countdown on every screen.",
@@ -129,6 +130,7 @@ export const en = {
     makeAction: "Turn this card into an action item that links back to it.",
   },
   host: {
+    votes: "Votes per person",
     controls: "Host controls",
     prev: "Previous phase",
     next: "Next phase",

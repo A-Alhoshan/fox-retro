@@ -26,6 +26,7 @@ export type RetroRow = {
   timer_started: boolean;
   phase_durations: Partial<Record<Phase, number>>;
   show_authors: boolean;
+  votes_per_person: number;
   focused_card_id: string | null;
   created_at: string;
 };

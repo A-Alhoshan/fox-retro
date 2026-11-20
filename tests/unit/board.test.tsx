@@ -49,6 +49,7 @@ function data(phase: Phase, o: Partial<RetroData> = {}, myRole: Role = "team"): 
       timer_started: false,
       phase_durations: {},
       show_authors: false,
+      votes_per_person: 3,
       focused_card_id: null,
       created_at: "",
     },
@@ -150,6 +151,22 @@ describe("Board — voting", () => {
     renderBoard(data("voting", { cards: [card("c1", "went_well", "Demos")], myVotes: votes(1), totals: { c1: 9 } }));
     expect(screen.getByText("2 votes left")).toBeInTheDocument();
     expect(screen.queryByText("9 votes")).toBeNull();
+  });
+
+  it("uses the host's vote count", () => {
+    const d = data("voting", { cards: [card("c1", "went_well", "Demos")], myVotes: votes(3) });
+    d.retro!.votes_per_person = 5;
+    renderBoard(d);
+    expect(screen.getByText("2 votes left")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Vote" })).not.toBeDisabled();
+  });
+
+  it("keeps votes but blocks new ones when the count is lowered", () => {
+    const d = data("voting", { cards: [card("c1", "went_well", "Demos")], myVotes: votes(4) });
+    d.retro!.votes_per_person = 2;
+    renderBoard(d);
+    expect(screen.getByText("0 votes left")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Vote" })).toBeDisabled();
   });
 
   it("disables voting at 0 left", () => {

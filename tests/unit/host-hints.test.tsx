@@ -20,6 +20,7 @@ const retro: RetroRow = {
   timer_started: false,
   phase_durations: {},
   show_authors: false,
+  votes_per_person: 3,
   focused_card_id: null,
   created_at: new Date().toISOString(),
 };
@@ -46,6 +47,32 @@ describe("host control hints", () => {
     const desc = messages.en.hint[hintKey.split(".")[1] as keyof typeof messages.en.hint];
     await userEvent.hover(screen.getByRole("button", { name: label }));
     expect(await screen.findByText(desc)).toBeInTheDocument();
+  });
+
+  it("shows the vote count control only while voting, with a hint", async () => {
+    ui("en");
+    const input = screen.getByRole("spinbutton", { name: "Votes per person" });
+    expect(input).toHaveValue(3);
+    await userEvent.hover(input);
+    expect(await screen.findByText(messages.en.hint.votes)).toBeInTheDocument();
+  });
+
+  it("snaps an invalid vote count back to the current value", async () => {
+    ui("en");
+    const input = screen.getByRole("spinbutton", { name: "Votes per person" });
+    await userEvent.clear(input);
+    await userEvent.type(input, "0");
+    await userEvent.tab();
+    expect(input).toHaveValue(3);
+  });
+
+  it("hides the vote count control outside voting", () => {
+    render(
+      <LocaleProvider initial="en">
+        <HostBar retro={{ ...retro, phase: "writing" }} offsetMs={0} />
+      </LocaleProvider>,
+    );
+    expect(screen.queryByRole("spinbutton", { name: "Votes per person" })).toBeNull();
   });
 
   it("hints are in Arabic for Arabic users", async () => {
