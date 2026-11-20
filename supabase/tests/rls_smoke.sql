@@ -143,5 +143,37 @@ begin
   exception when others then res := res || E'\n6 domain allowlist: FAIL ' || sqlerrm;
   end;
 
+  -- 7. PIN lockout RPCs (key-guarded)
+  execute 'reset role';
+  insert into private.app_secrets (name, value_hash)
+    values ('pin_key', encode(extensions.digest('smoke-key', 'sha256'), 'hex'))
+    on conflict (name) do update set value_hash = excluded.value_hash;
+  perform set_config('role', 'anon', true);
+  begin
+    perform public.pin_check('wrong-key', 'host@x.test');
+    res := res || E'\n7 wrong key rejected: FAIL';
+  exception when others then res := res || E'\n7 wrong key rejected: ok';
+  end;
+  begin
+    perform 1 from private.pin_attempts;
+    res := res || E'\n7a anon cannot read lock table: FAIL';
+  exception when others then res := res || E'\n7a anon cannot read lock table: ok';
+  end;
+  declare t timestamptz; ex boolean;
+  begin
+    for i in 1..4 loop t := public.pin_record('smoke-key', 'Host@X.test', false); end loop;
+    res := res || E'\n7b four failures not locked: ' || case when t is null then 'ok' else 'FAIL' end;
+    t := public.pin_record('smoke-key', ' host@x.test ', false);
+    res := res || E'\n7c fifth failure locks ~15m: '
+      || case when t between now() + interval '14 minutes' and now() + interval '16 minutes' then 'ok' else 'FAIL ' || coalesce(t::text, 'null') end;
+    select c.account_exists, c.locked_until into ex, t from public.pin_check('smoke-key', 'HOST@x.test') c;
+    res := res || E'\n7d check sees account + lock: ' || case when ex and t is not null then 'ok' else 'FAIL' end;
+    perform public.pin_record('smoke-key', 'host@x.test', true);
+    select c.locked_until into t from public.pin_check('smoke-key', 'host@x.test') c;
+    res := res || E'\n7e success clears lock: ' || case when t is null then 'ok' else 'FAIL' end;
+    select c.account_exists into ex from public.pin_check('smoke-key', 'nobody@x.test') c;
+    res := res || E'\n7f unknown email not found: ' || case when not ex then 'ok' else 'FAIL' end;
+  end;
+
   raise exception 'SMOKE REPORT:%', res;
 end $$;
