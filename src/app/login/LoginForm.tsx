@@ -25,6 +25,7 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
   const [pin, setPin] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [canReset, setCanReset] = useState(false);
   const [error, setError] = useState<string | null>(linkError ? t("login.linkFailed") : null);
 
   const errorText = (e: LoginError) =>
@@ -44,7 +45,10 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
     setError(null);
     try {
       const r = await action();
-      if ("locked" in r) setError(t("login.locked", { n: r.locked }));
+      if ("locked" in r) {
+        setError(t("login.locked", { n: r.locked }));
+        setCanReset(true);
+      }
       else if ("error" in r) setError(errorText(r.error));
       else onOk(r);
     } catch {
@@ -78,6 +82,7 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
   const back = () => {
     setStep("email");
     setError(null);
+    setCanReset(false);
   };
 
   return (
@@ -171,6 +176,11 @@ export function LoginForm({ linkError = false }: { linkError?: boolean }) {
                         ? t("login.create")
                         : t("login.signIn")}
                 </button>
+                {step === "email" && canReset && (
+                  <button type="button" onClick={forgot} disabled={busy} className="text-sm text-primary underline">
+                    {t("login.forgot")}
+                  </button>
+                )}
                 {step !== "email" && (
                   <div className="flex items-center justify-between text-sm">
                     <button type="button" onClick={back} className="text-muted-foreground underline">

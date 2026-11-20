@@ -3,7 +3,10 @@ import path from "node:path";
 
 export default defineConfig({
   oxc: { jsx: { runtime: "automatic" } },
-  resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },
+  resolve: { alias: {
+      "@": path.resolve(import.meta.dirname, "src"),
+      "server-only": path.resolve(import.meta.dirname, "tests/stubs/server-only.ts"),
+    } },
   test: {
     environment: "jsdom",
     setupFiles: ["./tests/setup.ts"],

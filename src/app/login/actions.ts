@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@/lib/supabase/server";
 import { isHostEmailAllowed } from "@/lib/domain/validate";
-import { normalizePin, pinPassword, validatePin } from "@/lib/domain/pin";
+import { normalizePin, pinPassword, pinRpcKey, validatePin } from "@/lib/domain/pin";
 
 export type LoginError = "invalid" | "domain_not_allowed" | "failed" | "wrong_pin" | "format" | "weak" | "mismatch";
 type Err = { error: LoginError };
@@ -21,19 +21,28 @@ function cleanEmail(email: string): string | Err {
   return clean;
 }
 
+// A new PIN needs proof of email access: the session was opened from the reset link within the hour.
+const EMAIL_METHODS = new Set(["recovery", "otp", "magiclink"]);
+async function cameFromEmailLink(sb: SupabaseClient): Promise<boolean> {
+  const { data } = await sb.auth.getClaims();
+  const amr = (data?.claims?.amr ?? []) as { method: string; timestamp: number }[];
+  const since = Date.now() / 1000 - 3600;
+  return amr.some((a) => EMAIL_METHODS.has(a.method) && a.timestamp >= since);
+}
+
 const minutesLeft = (until: string) => Math.max(1, Math.ceil((new Date(until).getTime() - Date.now()) / 60_000));
 
 const pinCheck = (sb: SupabaseClient, key: string, email: string) => pinCall(sb, "pin_check", key, email);
 
 async function pinCall(sb: SupabaseClient, fn: "pin_check" | "pin_begin", key: string, email: string) {
-  const { data, error } = await sb.rpc(fn, { p_key: key, p_email: email });
+  const { data, error } = await sb.rpc(fn, { p_key: pinRpcKey(key), p_email: email });
   const row = Array.isArray(data) ? data[0] : data;
   if (error || !row) return null;
   return { exists: Boolean(row.account_exists), lockedUntil: (row.locked_until as string | null) ?? null };
 }
 
 async function pinRecord(sb: SupabaseClient, key: string, email: string, ok: boolean): Promise<string | null> {
-  const { data } = await sb.rpc("pin_record", { p_key: key, p_email: email, p_ok: ok });
+  const { data } = await sb.rpc("pin_record", { p_key: pinRpcKey(key), p_email: email, p_ok: ok });
   return (data as string | null) ?? null;
 }
 
@@ -90,7 +99,7 @@ export async function signInWithPin(email: string, pin: string): Promise<{ ok: t
     return { ok: true };
   }
   if (error.code !== "invalid_credentials") {
-    await sb.rpc("pin_release", { p_key: key, p_email: clean });
+    await sb.rpc("pin_release", { p_key: pinRpcKey(key), p_email: clean });
     return { error: "failed" };
   }
   const until = await pinRecord(sb, key, clean, false);
@@ -115,6 +124,7 @@ export async function setNewPin(pin: string, confirm: string): Promise<{ ok: tru
   const sb = await createServerClient();
   const user = (await sb.auth.getUser()).data.user;
   if (!user?.email || user.is_anonymous) return { error: "failed" };
+  if (!(await cameFromEmailLink(sb))) return { error: "failed" };
   const email = user.email.toLowerCase();
   const { error } = await sb.auth.updateUser({ password: pinPassword(key, email, p) });
   if (error) return { error: "failed" };

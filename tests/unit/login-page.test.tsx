@@ -64,6 +64,14 @@ describe("login page", () => {
     expect(await screen.findByText(en.locked.replace("{n}", "7"))).toBeInTheDocument();
   });
 
+  it("a locked user can still ask for a reset", async () => {
+    await enterEmail({ locked: 7 });
+    sendPinReset.mockResolvedValue({ ok: true });
+    await userEvent.click(await screen.findByRole("button", { name: en.forgot }));
+    expect(sendPinReset).toHaveBeenCalledWith("host@x.com", window.location.origin);
+    expect(await screen.findByText(en.resetSent)).toBeInTheDocument();
+  });
+
   it("forgot PIN sends the reset email and says so", async () => {
     await enterEmail({ status: "existing" });
     sendPinReset.mockResolvedValue({ ok: true });

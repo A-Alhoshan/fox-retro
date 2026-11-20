@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalizePin, validatePin, pinPassword } from "@/lib/domain/pin";
+import { normalizePin, validatePin, pinPassword, pinRpcKey } from "@/lib/domain/pin";
 
 describe("validatePin", () => {
   it("accepts a normal 5-digit PIN", () => {
@@ -34,5 +34,15 @@ describe("pinPassword", () => {
     const a = pinPassword(s, "a@b.com", "48213");
     expect(pinPassword(s, "a@b.com", "48214")).not.toBe(a);
     expect(pinPassword("t".repeat(32), "a@b.com", "48213")).not.toBe(a);
+  });
+});
+
+describe("pinRpcKey", () => {
+  it("derives a stable key that is not the secret itself", () => {
+    const s = "s".repeat(32);
+    expect(pinRpcKey(s)).toMatch(/^[0-9a-f]{64}$/);
+    expect(pinRpcKey(s)).toBe(pinRpcKey(s));
+    expect(pinRpcKey(s)).not.toContain(s);
+    expect(pinRpcKey("t".repeat(32))).not.toBe(pinRpcKey(s));
   });
 });

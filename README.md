@@ -115,10 +115,13 @@ npm run dev
 
 1. Run `supabase/migrations/*.sql` in order in the SQL editor.
 2. Go to **Authentication → Sign In / Providers**: enable **Email** and **Allow anonymous sign-ins**, and turn **Confirm email off** (hosts sign in with email + a 5-digit PIN, so sign-up sends no email).
-3. Hosts sign in with a PIN. Generate a long random `PIN_SECRET` (e.g. `openssl rand -base64 48`), put it in `.env.local` and on Vercel, and store only its hash:
+3. Hosts sign in with a PIN. Generate a long random `PIN_SECRET` (e.g. `openssl rand -base64 48`) and put it in `.env.local` and on Vercel. The database only ever sees a hash of a key derived from it. Compute that hash on your machine (the secret never leaves it):
+   ```bash
+   node -e "const c=require('crypto');const k=c.createHmac('sha256',process.env.PIN_SECRET).update('rpc-key').digest('hex');console.log(c.createHash('sha256').update(k).digest('hex'))"
+   ```
+   then store the printed hash:
    ```sql
-   insert into private.app_secrets (name, value_hash)
-   values ('pin_key', encode(extensions.digest('<PIN_SECRET>', 'sha256'), 'hex'));
+   insert into private.app_secrets (name, value_hash) values ('pin_rpc_key', '<printed hash>');
    ```
    Five wrong PINs lock an email for 15 minutes.
 4. Go to **Authentication → URL Configuration**. Set the Site URL to your deployment and add `<url>/auth/callback` (plus `http://localhost:3000/auth/callback`) as redirect URLs.
